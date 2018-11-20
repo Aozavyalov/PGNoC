@@ -79,9 +79,9 @@ module fabric #(
               begin
                 gen_state = FLIT_GEN;
                 if (DEBUG)
-                  $display("Time: %3d\tGen  %2h: generated a new package with len %2h to %2h addr", $time, ADDR, pack_len + 1, dest_addr);
+                  $display("%5d|%3h|new package|len:%2h|addr:%3h", $time, ADDR, pack_len + 1, dest_addr);
                 else
-                  $fdisplay(log_file, "Time: %3d\tGen  %2h: generated a new package with len %2h to %2h addr", $time, ADDR, pack_len + 1, dest_addr);
+                  $fdisplay(log_file, "%5d|%3h|new package|len:%2h|addr:%3h", $time, ADDR, pack_len + 1, dest_addr);
               end
           end
         FLIT_GEN:
@@ -93,32 +93,27 @@ module fabric #(
                 gen_data = $urandom;
                 data_o = {gen_data, (pack_len == 0 ? 1'b1 : 1'b0), dest_addr};  
                 if (DEBUG)     
-                  $display("Time: %3d\tGen  %2h: flit %b generated", $time, ADDR, data_o);
+                  $display("%5d|%3h|new flit|%b", $time, ADDR, data_o);
                 else
-                  $fdisplay(log_file, "Time: %3d\tGen  %2h: flit %b generated", $time, ADDR, data_o);
+                  $fdisplay(log_file, "%5d|%3h|new flit|%b", $time, ADDR, data_o);
                 gen_state = FLIT_SEND;
               end
             else
               freq_cntr = freq_cntr + 1;
-          else
-            if (DEBUG)
-              $display("Time: %3d\tGen  %2h: not ready for generating", $time, ADDR);
-            else
-              $fdisplay(log_file, "Time: %3d\tGen  %2h: not ready for generating", $time, ADDR);
         FLIT_SEND:
           if (out_w == 1'b1)
             begin
               out_r = 1'b0;
               if (DEBUG)
-                $display("Time: %3d\tGen  %2h: the flit %b has been sended", $time, ADDR, data_o);
+                $display("%5d|%3h|flit sended|%b", $time, ADDR, data_o);
               else
-                $fdisplay(log_file, "Time: %3d\tGen  %2h: the flit %b has been sended", $time, ADDR, data_o);
+                $fdisplay(log_file, "%5d|%3h|flit sended|%b", $time, ADDR, data_o);
               if (pack_len == 0)
                   begin
                     if (DEBUG)
-                      $display("Time: %3d\tGen  %2h: the package has been sended", $time, ADDR);
+                      $display("%5d|%3h|package sended|%d", $time, ADDR, generated_packs);
                     else
-                      $fdisplay(log_file, "Time: %3d\tGen  %2h: the package has been sended", $time, ADDR);
+                      $fdisplay(log_file, "%5d|%3h|package sended|%d", $time, ADDR, generated_packs);
                     generated_packs = generated_packs + 1;
                     if (generated_packs == PACKS_TO_GEN)
                       gen_state = GEN_FINISH;
@@ -134,9 +129,9 @@ module fabric #(
         GEN_FINISH:
           begin
             if (DEBUG)
-              $display("Time: %3d\tGen  %2h: finish, generated %2h packeges", $time, ADDR, generated_packs);
+              $display("%5d|%3h|finish generating|%d", $time, ADDR, generated_packs);
             else
-              $fdisplay(log_file, "Time: %3d\tGen  %2h: finish, generated %2h packeges", $time, ADDR, generated_packs);
+              $fdisplay(log_file, "%5d|%3h|finish generating|%d", $time, ADDR, generated_packs);
           end
         default:
           gen_state = RESET;
@@ -161,29 +156,24 @@ module fabric #(
               recv_state = GET;
               recv_packs = 0;
               if (DEBUG)
-                $display("Time: %3d\tRecv %2h: ready to get flit", $time, ADDR);
+                $display("%5d|%3h|wait for reading", $time, ADDR);
               else
-                $fdisplay(log_file, "Time: %3d\tRecv %2h: ready to get flit", $time, ADDR);
+                $fdisplay(log_file, "%5d|%3h|wait for reading", $time, ADDR);
             end
-          else
-            if (DEBUG)
-              $display("Time: %3d\tRecv %2h: waiting for reading", $time, ADDR);
-            else
-              $fdisplay(log_file, "Time: %3d\tRecv %2h: waiting for reading", $time, ADDR);
         GET:
           if (in_r == 1'b0)
             begin
               in_w = 1'b0;
               if (DEBUG)
-                $display("Time: %3d\tRecv %2h: got %2h flit: %b", $time, ADDR, recv_flits, data_i);
+                $display("%5d|%3h|recved flit|%b", $time, ADDR, recv_flits, data_i);
               else
-                $fdisplay(log_file, "Time: %3d\tRecv %2h: got %2h flit: %b", $time, ADDR, recv_flits, data_i);
+                $fdisplay(log_file, "%5d|%3h|recved flit|%b", $time, ADDR, recv_flits, data_i);
               if (ADDR != data_i[ADDR_SIZE-1:0])  // if wrong address
                 begin
                   if (DEBUG)
-                    $display("Time: %3d\tRecv %2h: Received wrong package! real addr = %2h", $time, ADDR, data_i[ADDR_SIZE-1:0]);
+                    $display("%5d|%3h|recved wrong flit|real addr: %3h", $time, ADDR, data_i[ADDR_SIZE-1:0]);
                   else
-                    $fdisplay(log_file, "Time: %3d\tRecv %2h: Received wrong package! real addr = %2h", $time, ADDR, data_i[ADDR_SIZE-1:0]);
+                    $fdisplay(log_file, "%5d|%3h|recved wrong flit|real addr: %3h", $time, ADDR, data_i[ADDR_SIZE-1:0]);
                   wrong_packs = wrong_packs + 1;
                 end
               if (data_i[ADDR_SIZE] == 1'b1)    // if last flit of a package
@@ -191,9 +181,9 @@ module fabric #(
                   recv_packs = recv_packs + 1;
                   recv_flits = 0;
                   if (DEBUG)
-                    $display("Time: %3d\tRecv %2h: full package received. Now have %2d packages", $time, ADDR, recv_packs);
+                    $display("%5d|%3h|recved package|packeges:%d", $time, ADDR, recv_packs);
                   else
-                    $fdisplay(log_file, "Time: %3d\tRecv %2h: full package received. Now have %2d packages", $time, ADDR, recv_packs);
+                    $fdisplay(log_file, "%5d|%3h|recved package|packeges:%d", $time, ADDR, recv_packs);
                 end
               else
                 recv_flits = recv_flits + 1;
@@ -216,9 +206,9 @@ module fabric #(
         recv_flits      <= 0;
         wrong_packs     <= 0;
         if (DEBUG)
-          $display("Time: %3d\tFabric  %2h: IP has been reseted", $time, ADDR);
+          $display("%5d|%3h|reset", $time, ADDR);
         else
-          $fdisplay(log_file, "Time: %3d\tFabric  %2h: IP has been reseted", $time, ADDR);
+          $fdisplay(log_file, "%5d|%3h|reset", $time, ADDR);
       end
 
 endmodule // fabric
