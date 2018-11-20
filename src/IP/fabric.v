@@ -79,9 +79,9 @@ module fabric #(
               begin
                 gen_state = FLIT_GEN;
                 if (DEBUG)
-                  $display("%5d|%3h|new package|len:%2h|addr:%3h", $time, ADDR, pack_len + 1, dest_addr);
+                  $display("%5d|%3h|new package|len: %2h|addr: %3h", $time, ADDR, pack_len + 1, dest_addr);
                 else
-                  $fdisplay(log_file, "%5d|%3h|new package|len:%2h|addr:%3h", $time, ADDR, pack_len + 1, dest_addr);
+                  $fdisplay(log_file, "%5d|%3h|new package|len: %2h|addr: %3h", $time, ADDR, pack_len + 1, dest_addr);
               end
           end
         FLIT_GEN:
@@ -110,11 +110,11 @@ module fabric #(
                 $fdisplay(log_file, "%5d|%3h|flit sended|%b", $time, ADDR, data_o);
               if (pack_len == 0)
                   begin
-                    if (DEBUG)
-                      $display("%5d|%3h|package sended|%d", $time, ADDR, generated_packs);
-                    else
-                      $fdisplay(log_file, "%5d|%3h|package sended|%d", $time, ADDR, generated_packs);
                     generated_packs = generated_packs + 1;
+                    if (DEBUG)
+                      $display("%5d|%3h|package sended|%2d", $time, ADDR, generated_packs);
+                    else
+                      $fdisplay(log_file, "%5d|%3h|package sended|%2d", $time, ADDR, generated_packs);
                     if (generated_packs == PACKS_TO_GEN)
                       gen_state = GEN_FINISH;
                     else
@@ -164,26 +164,27 @@ module fabric #(
           if (in_r == 1'b0)
             begin
               in_w = 1'b0;
-              if (DEBUG)
-                $display("%5d|%3h|recved flit|%b", $time, ADDR, recv_flits, data_i);
-              else
-                $fdisplay(log_file, "%5d|%3h|recved flit|%b", $time, ADDR, recv_flits, data_i);
               if (ADDR != data_i[ADDR_SIZE-1:0])  // if wrong address
                 begin
                   if (DEBUG)
-                    $display("%5d|%3h|recved wrong flit|real addr: %3h", $time, ADDR, data_i[ADDR_SIZE-1:0]);
+                    $display("%5d|%3h|recved wrong flit|real addr: %3h|%b", $time, ADDR, data_i[ADDR_SIZE-1:0], data_i);
                   else
-                    $fdisplay(log_file, "%5d|%3h|recved wrong flit|real addr: %3h", $time, ADDR, data_i[ADDR_SIZE-1:0]);
+                    $fdisplay(log_file, "%5d|%3h|recved wrong flit|real addr: %3h|%b", $time, ADDR, data_i[ADDR_SIZE-1:0], data_i);
                   wrong_packs = wrong_packs + 1;
                 end
+              else
+                if (DEBUG)
+                  $display("%5d|%3h|recved flit|%2d|%b", $time, ADDR, recv_flits, data_i);
+                else
+                  $fdisplay(log_file, "%5d|%3h|recved flit|%2d|%b", $time, ADDR, recv_flits, data_i);
               if (data_i[ADDR_SIZE] == 1'b1)    // if last flit of a package
                 begin
                   recv_packs = recv_packs + 1;
                   recv_flits = 0;
                   if (DEBUG)
-                    $display("%5d|%3h|recved package|packeges:%d", $time, ADDR, recv_packs);
+                    $display("%5d|%3h|recved package|packeges: %2d", $time, ADDR, recv_packs);
                   else
-                    $fdisplay(log_file, "%5d|%3h|recved package|packeges:%d", $time, ADDR, recv_packs);
+                    $fdisplay(log_file, "%5d|%3h|recved package|packeges: %2d", $time, ADDR, recv_packs);
                 end
               else
                 recv_flits = recv_flits + 1;
