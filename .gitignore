@@ -5,3 +5,4 @@
 /tests/testfiles/*
 /tests/logs/*
 /routing_tables
+/stats
