@@ -41,12 +41,19 @@ def parse_logs(path_to_logs, flit_len=38):
   return logs
 
 def make_stats(logs):
-  nodes = dict()
+  stats = { "flits_sended": 0,
+            "flits_recv"  : 0,
+            "packs_sended": 0,
+            "packs_recved": 0,
+            "wrong_flits" : 0,
+            "mean_time"   : 0,
+            "nodes" : dict()
+          }
   flits_send_time = dict()
   for log in sorted(logs, key=lambda log: log['time']):
     # print(log)
-    if log['addr'] not in nodes:
-      nodes[log['addr']] = {
+    if log['addr'] not in stats['nodes']:
+      stats['nodes'][log['addr']] = {
         "flits_sended": 0,
         "flits_recv"  : 0,
         "packs_sended": 0,
@@ -55,68 +62,68 @@ def make_stats(logs):
         "mean_time"   : 0
       }
     if log['stat'] == "flit sended":
-      nodes[log['addr']]['flits_sended'] += 1
+      stats['nodes'][log['addr']]['flits_sended'] += 1
       flits_send_time[log['flit']] = log['time']
     elif log['stat'] == "recved flit":
-      nodes[log['addr']]['flits_recv'] += 1
-      nodes[log['addr']]['mean_time'] += (log['time'] - flits_send_time[log['flit']])
+      stats['nodes'][log['addr']]['flits_recv'] += 1
+      stats['nodes'][log['addr']]['mean_time'] += (log['time'] - flits_send_time[log['flit']])
       flits_send_time.pop(log['flit'])
     elif log['stat'] == "recved wrong flit":
-      nodes[log['addr']]['wrong_flits'] += 1
+      stats['nodes'][log['addr']]['wrong_flits'] += 1
     elif log['stat'] == "package sended":
-      nodes[log['addr']]['packs_sended'] += 1
+      stats['nodes'][log['addr']]['packs_sended'] += 1
     elif log['stat'] == "recved package":
-      nodes[log['addr']]['packs_recved'] += 1
-  for key in nodes:
-    nodes[key]['mean_time'] = nodes[key]['mean_time'] / nodes[key]['flits_recv']
-  return nodes
-
-def result_former(res_dict):
-  res_str = str()
-  all_flits_sended   = 0
-  all_flits_received = 0
-  all_packs_sended   = 0
-  all_packs_received = 0
-  all_wrong_flits    = 0
-  all_mean_time      = 0
-  for key in sorted(res_dict):
-    res_str += f'{key} node:\n'
-    for param in sorted(res_dict[key]):
+      stats['nodes'][log['addr']]['packs_recved'] += 1
+  for node in stats['nodes']:
+    stats['nodes'][node]['mean_time'] = stats['nodes'][node]['mean_time'] / stats['nodes'][node]['flits_recv']
+  # all stats
+  for node in stats['nodes']:
+    for param in stats['nodes'][node]:
       if param == 'flits_sended':
-        res_str += f"\tflits sended: {res_dict[key][param]}\n"
-        all_flits_sended += res_dict[key][param]
+        stats['flits_sended'] += stats['nodes'][node][param]
       elif param == 'flits_recv':
-        res_str += f"\tflits received: {res_dict[key][param]}\n"
-        all_flits_received += res_dict[key][param]
+        stats['flits_recv'] += stats['nodes'][node][param]
       elif param == 'packs_sended':
-        res_str += f"\tpackets sended: {res_dict[key][param]}\n"
-        all_packs_sended += res_dict[key][param]
+        stats['packs_sended'] += stats['nodes'][node][param]
       elif param == 'packs_recved':
-        res_str += f"\tpackets received: {res_dict[key][param]}\n"
-        all_packs_received += res_dict[key][param]
+        stats['packs_recved'] += stats['nodes'][node][param]
       elif param == 'wrong_flits':
-        res_str += f"\twrong flits received: {res_dict[key][param]}\n"
-        all_wrong_flits += res_dict[key][param]
+        stats['wrong_flits'] += stats['nodes'][node][param]
       elif param == 'mean_time':
-        res_str += f"\tMean flit receive time: {res_dict[key][param]}\n"
-        all_mean_time += res_dict[key][param]
-  all_mean_time = all_mean_time / len(res_dict.keys())
+        stats['mean_time'] += stats['nodes'][node][param]
+  stats['mean_time'] = stats['mean_time'] / len(stats['nodes'].keys())
+  return stats
+
+def result_former(stats):
+  res_str = str()
   res_str += "All stats:\n"
-  res_str += f"\tflits sended: {all_flits_sended}\n"
-  res_str += f"\tflits received: {all_flits_received}\n"
-  res_str += f"\tpackets sended: {all_packs_sended}\n"
-  res_str += f"\tpackets received: {all_packs_received}\n"
-  res_str += f"\twrong flits received: {all_wrong_flits}\n"
-  res_str += f"\tMean flit receive time: {all_mean_time}\n"
+  res_str += f"\tFlits sended: {stats['flits_sended']}\n"
+  res_str += f"\tFlits received: {stats['flits_recv']}\n"
+  res_str += f"\tPackets sended: {stats['packs_sended']}\n"
+  res_str += f"\tPackets received: {stats['packs_recved']}\n"
+  res_str += f"\tWrong flits received: {stats['wrong_flits']}\n"
+  res_str += f"\tMean flit receive time: {stats['mean_time']}\n"
+  for node in sorted(stats['nodes']):
+    res_str += f"{node} node\n"
+    res_str += f"\tFlits sended: {stats['nodes'][node]['flits_sended']}\n"
+    res_str += f"\tFlits received: {stats['nodes'][node]['flits_recv']}\n"
+    res_str += f"\tPackets sended: {stats['nodes'][node]['packs_sended']}\n"
+    res_str += f"\tPackets received: {stats['nodes'][node]['packs_recved']}\n"
+    res_str += f"\tWrong flits received: {stats['nodes'][node]['wrong_flits']}\n"
+    res_str += f"\tMean flit receive time: {stats['nodes'][node]['mean_time']}\n"
   return res_str
 
 if __name__ == "__main__":
   args = arg_parser_create()
   logs = parse_logs(args.logs_path)
-  stats = make_stats(logs)
-  res_string = result_former(stats)
-  if args.savefile:
-    with open(args.savefile, 'w') as savefile:
-      savefile.write(res_string)
+  if logs:
+    stats = make_stats(logs)
+    res_string = result_former(stats)
+    if args.savefile:
+      with open(args.savefile, 'w') as savefile:
+        savefile.write(res_string)
+    else:
+      print(res_string)
   else:
-    print(res_string)
+    print("There are no logs")
+  
