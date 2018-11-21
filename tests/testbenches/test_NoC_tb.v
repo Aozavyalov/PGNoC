@@ -1,4 +1,4 @@
-`timescale 1ns / 1ns
+`timescale 1ns / 500ps
 `include "../../src/configs.vh"
 
 module test_NoC_tb();
