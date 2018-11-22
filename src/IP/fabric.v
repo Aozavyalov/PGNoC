@@ -128,9 +128,9 @@ module fabric #(
         GEN_FINISH:
           begin
             if (DEBUG)
-              $display("%5d|%3h|finish generating|%d", time_reg, ADDR, generated_packs);
+              $display("%5d|%3h|finish generating|%5d", time_reg, ADDR, generated_packs);
             else
-              $fdisplay(log_file, "%5d|%3h|finish generating|%d", time_reg, ADDR, generated_packs);
+              $fdisplay(log_file, "%5d|%3h|finish generating|%5d", time_reg, ADDR, generated_packs);
           end
         default:
           gen_state = RESET;
