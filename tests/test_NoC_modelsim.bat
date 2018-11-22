@@ -5,8 +5,7 @@ set s1=1
 set s2=2
 
 :choose
-echo.Enter topology type or help to get it:
-set /p type=
+set type=%1
 if "%type%"=="help" goto help
 if "%type%"=="mesh" goto set_params
 if "%type%"=="circ2" goto set_params
@@ -14,22 +13,18 @@ if "%type%"=="torus" goto set_params
 goto help
 
 :set_params
-echo.Enter nodes num
-set /p num=
+set num=%2
 if "%type%"=="mesh" goto h_size_set
 if "%type%"=="torus" goto h_size_set
 if "%type%"=="circ2" goto s1_s2_set
 
 :h_size_set
-echo.Enter h_size
-set /p h_size=
+set h_size=%3
 goto run
 
 :s1_s2_set
-echo.Enter s1
-set /p s1=
-echo.Enter s2
-set /p s2=
+set s1=%3
+set s2=%4
 goto run
 
 :help
