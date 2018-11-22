@@ -79,7 +79,8 @@ def make_stats(logs):
     elif log['stat'] == "recved package":
       stats['nodes'][log['addr']]['packs_recved'] += 1
   for node in stats['nodes']:
-    stats['nodes'][node]['mean_time'] = stats['nodes'][node]['mean_time'] / stats['nodes'][node]['flits_recv']
+    if stats['nodes'][node]['flits_recv']: # if some flits recved
+      stats['nodes'][node]['mean_time'] = stats['nodes'][node]['mean_time'] / stats['nodes'][node]['flits_recv']
   # all stats
   for node in stats['nodes']:
     for param in stats['nodes'][node]:
