@@ -156,12 +156,12 @@ module test_NoC_tb();
     begin
       test_idx = 0;
       rst_r = 1'b1;
-      #(1) rst_r = 1'b0;
+      #(2*halfperiod) rst_r = 1'b0;
     end
   
   always @(posedge clk_r)
     begin 
-      if (test_idx*2 == max_test - 1)
+      if (test_idx == max_test)
         begin
           $display("Test has been finished");
           $finish;
