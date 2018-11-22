@@ -59,15 +59,19 @@ def make_stats(logs):
         "packs_sended": 0,
         "packs_recved": 0,
         "wrong_flits" : 0,
-        "mean_time"   : 0
+        "mean_time"   : 0,
+        "last_flit_send_time" : 0,
+        "last_flit_recv_time" : 0,
       }
     if log['stat'] == "flit sended":
       stats['nodes'][log['addr']]['flits_sended'] += 1
       flits_send_time[log['flit']] = log['time']
+      stats['nodes'][log['addr']]['last_flit_send_time'] = log['time'] - 1
     elif log['stat'] == "recved flit":
       stats['nodes'][log['addr']]['flits_recv'] += 1
       stats['nodes'][log['addr']]['mean_time'] += (log['time'] - flits_send_time[log['flit']])
       flits_send_time.pop(log['flit'])
+      stats['nodes'][log['addr']]['last_flit_recv_time'] = log['time'] - 1
     elif log['stat'] == "recved wrong flit":
       stats['nodes'][log['addr']]['wrong_flits'] += 1
     elif log['stat'] == "package sended":
@@ -91,12 +95,17 @@ def make_stats(logs):
         stats['wrong_flits'] += stats['nodes'][node][param]
       elif param == 'mean_time':
         stats['mean_time'] += stats['nodes'][node][param]
+  # stats['model_time'] = sorted(logs, key=lambda log: log['time'])[-1]['time'] - 1 # 1 cycle for resetting
+  stats['model_time'] = max([stats['nodes'][node]['last_flit_recv_time'] for node in stats['nodes']])
   stats['mean_time'] = stats['mean_time'] / len(stats['nodes'].keys())
+  stats['fir'] = stats['flits_sended'] / stats['model_time'] / len(stats['nodes'].keys())
   return stats
 
 def result_former(stats):
   res_str = str()
   res_str += "All stats:\n"
+  res_str += f"\tModeling time: {stats['model_time']}\n"
+  res_str += f"\tFlits injection rate: {stats['fir']}\n"
   res_str += f"\tFlits sended: {stats['flits_sended']}\n"
   res_str += f"\tFlits received: {stats['flits_recv']}\n"
   res_str += f"\tPackets sended: {stats['packs_sended']}\n"
@@ -111,6 +120,8 @@ def result_former(stats):
     res_str += f"\tPackets received: {stats['nodes'][node]['packs_recved']}\n"
     res_str += f"\tWrong flits received: {stats['nodes'][node]['wrong_flits']}\n"
     res_str += f"\tMean flit receive time: {stats['nodes'][node]['mean_time']}\n"
+    res_str += f"\tLast flit sended in {stats['nodes'][node]['last_flit_send_time']} time\n"
+    res_str += f"\tLast flit received in {stats['nodes'][node]['last_flit_recv_time']} time\n"
   return res_str
 
 if __name__ == "__main__":
