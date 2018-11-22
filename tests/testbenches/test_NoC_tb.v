@@ -1,10 +1,10 @@
-`timescale 1ns / 500ps
+`timescale 1ns / 100ps
 `include "../../src/configs.vh"
 
 module test_NoC_tb();
   
-  localparam period    = `PERIOD;
-  localparam max_test  = `CLK_CNT;
+  localparam halfperiod = `HALFPERIOD;
+  localparam max_test  = `TEST_TIME;
   localparam nodes_num = `NODES_NUM;
   localparam ports_num = `PORTS_NUM;
   localparam data_size = `DATA_SIZE;
@@ -147,7 +147,7 @@ module test_NoC_tb();
     begin
       clk_r = 1'b0;
       forever
-        #(period/2) clk_r = ~clk_r;
+        #(halfperiod) clk_r = ~clk_r;
     end
 
   integer test_idx;
@@ -160,10 +160,8 @@ module test_NoC_tb();
     end
   
   always @(posedge clk_r)
-    begin
-      // if (test_idx == 10)
-        // $stop;  
-      if (test_idx == max_test)
+    begin 
+      if (test_idx*2 == max_test - 1)
         begin
           $display("Test has been finished");
           $finish;
