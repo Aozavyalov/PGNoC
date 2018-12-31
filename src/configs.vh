@@ -15,7 +15,7 @@
 
 `ifdef MESH_2D
 `define RT_PATH "../testfiles/mesh_rt.hex"
-`define H_SIZE 2
+`define H_SIZE 3
 `endif
 
 `ifdef TORUS
@@ -30,10 +30,10 @@
 `endif
 
 // testing params for fabric module
-`define DEBUG        1
+`define DEBUG        0
 `define MAX_PACK_LEN 10
-`define PACKS_TO_GEN 5
-`define CLK_CNT      1000
-`define PERIOD       2
-`define GEN_FREQ     25
+`define PACKS_TO_GEN 11000
+`define TEST_TIME    5_000_000
+`define HALFPERIOD   1
+`define GEN_FREQ     55
 `define LOGS_PATH    "../logs"
