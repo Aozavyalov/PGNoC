@@ -79,7 +79,7 @@ module fabric #(
             if (DEBUG)
               begin
                 pack_len = MAX_PACK_LEN;
-                dest_addr = ADD_MOD(ADDR, 1, NODES_NUM);
+                dest_addr = `ADD_MOD(ADDR, 1, NODES_NUM);
               end
             else
               begin

@@ -151,17 +151,24 @@ module test_NoC_tb();
     end
 
   integer test_idx;
-
+  integer conn_change_timer;
+  reg [nodes_num*bus_size-1:0] prev_conn_out;
   initial
     begin
+      conn_change_timer = 0;
       test_idx = 0;
       rst_r = 1'b1;
       #(2*halfperiod) rst_r = 1'b0;
     end
   
   always @(posedge clk_r)
-    begin 
-      if (test_idx == max_test)
+    begin
+      if (prev_conn_out !== conn_out) begin
+        prev_conn_out = conn_out;
+        conn_change_timer = 0;
+      end else
+        conn_change_timer = conn_change_timer + 1;
+      if (test_idx == max_test || conn_change_timer == gen_freq*10)
         begin
           $display("Test has been finished");
           $finish;
