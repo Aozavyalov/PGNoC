@@ -31,6 +31,7 @@ goto run
 echo.
 echo.This script runs NoC modeling
 echo.Now available mesh, circ2 and torus topologies
+echo.Usage: test_NoC_modelsim.bat [help] {mesh, circ2, torus} nodes_num [h_size] [s1 s2]
 exit /B
 
 :run
