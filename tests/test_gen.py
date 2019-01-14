@@ -16,13 +16,9 @@ def add_mod(a, b, size):
 def sub_mod(a, b, size):
     return size - b + a if a - b < 0 else a - b
 
-def circ2_gen(data_i, in_w_i, out_r_i, routs_num, s0, s1, bus_size, add_z_n=0):
+def circ2_gen(data_i, routs_num, s0, s1, bus_size, add_z_n=0):
     data_i = data_i[::-1]
-    in_w_i = in_w_i[::-1]
-    out_r_i = out_r_i[::-1]
     data_o_list = ['z' for i in range(routs_num*4*bus_size)]
-    out_w_o_list = ['z' for i in range(routs_num*4)]
-    in_r_o_list = ['z' for i in range(routs_num*4)]
     for i in range(routs_num):
         # s0
         # print(add_mod(i, s0, routs_num), i)
@@ -33,19 +29,14 @@ def circ2_gen(data_i, in_w_i, out_r_i, routs_num, s0, s1, bus_size, add_z_n=0):
         left_rout_1 = sub_mod(i, s1, routs_num)
         for k in range(bus_size):
             data_o_list[rigth_rout_0*4*bus_size+3*bus_size+k] = data_i[i*4*bus_size+0*bus_size+k]
-        out_w_o_list[rigth_rout_0*4+3] = in_w_i [i*4+0]
-        in_r_o_list [rigth_rout_0*4+3] = out_r_i[i*4+0]
 
         for k in range(bus_size):
             data_o_list[left_rout_0*4*bus_size+0*bus_size+k] = data_i[i*4*bus_size+3*bus_size+k]
-        out_w_o_list[left_rout_0*4+0] = in_w_i[i*4+3]
-        in_r_o_list[left_rout_0*4+0] = out_r_i[i*4+3]
 
         # s1
         for k in range(bus_size):
             data_o_list[rigth_rout_1*4*bus_size+1*bus_size+k] = data_i[i*4*bus_size+2*bus_size+k]
-        out_w_o_list[rigth_rout_1*4+1] = in_w_i[i*4+2]
-        in_r_o_list[rigth_rout_1*4+1] = out_r_i[i*4+2]
+
         # for k in range(bus_size):
         #     data_o_list[i*4*bus_size+2*bus_size+k] = data_i[rigth_rout_1*4*bus_size+3*bus_size+k]
         # out_w_o_list[i*4+2] = in_w_i[rigth_rout_1*4+3]
@@ -53,8 +44,7 @@ def circ2_gen(data_i, in_w_i, out_r_i, routs_num, s0, s1, bus_size, add_z_n=0):
 
         for k in range(bus_size):
             data_o_list[left_rout_1*4*bus_size+2*bus_size+k] = data_i[i*4*bus_size+1*bus_size+k]
-        out_w_o_list[left_rout_1*4+2] = in_w_i[i*4+1]
-        in_r_o_list[left_rout_1*4+2] = out_r_i[i*4+1]
+
         # for k in range(bus_size):
         #     data_o_list[i*4*bus_size+3*bus_size+k] = data_i[left_rout_1*4*bus_size+2*bus_size+k]
         # out_w_o_list[i*4+3] = in_w_i[left_rout_1*4+2]
@@ -62,53 +52,36 @@ def circ2_gen(data_i, in_w_i, out_r_i, routs_num, s0, s1, bus_size, add_z_n=0):
         # print(i, out_w_o_list)
     return 'z'*add_z_n*4*bus_size + ''.join(data_o_list)[::-1], 'z'*add_z_n*4 + ''.join(out_w_o_list)[::-1], 'z'*add_z_n*4 + ''.join(in_r_o_list)[::-1]
 
-def mesh_2d_gen(data_i, in_w_i, out_r_i, routs_num, h_size, bus_size, add_z_n=0):
+def mesh_2d_gen(data_i, routs_num, h_size, bus_size, add_z_n=0):
     data_i = data_i[::-1]
-    in_w_i = in_w_i[::-1]
-    out_r_i = out_r_i[::-1]
     data_o_list = ['z' for i in range(routs_num*4*bus_size)]
-    out_w_o_list = ['z' for i in range(routs_num*4)]
-    in_r_o_list = ['z' for i in range(routs_num*4)]
+
     for i in range(routs_num):
         for j in range(routs_num):
             if (j == i + 1) and (j % h_size != 0):
                 for k in range(bus_size):
                     data_o_list[i*4*bus_size+k] = data_i[j*4*bus_size + 2*bus_size+k]
-                out_w_o_list[i*4] = in_w_i[j*4+2]
-                in_r_o_list[i*4] = out_r_i[j*4+2]
                 for k in range(bus_size):
                     data_o_list[j*4*bus_size+2*bus_size+k] = data_i[i*4*bus_size+k]
-                out_w_o_list[j*4+2] = in_w_i[i*4]
-                in_r_o_list[j*4+2] = out_r_i[i*4]
             elif j == h_size + i:
                 for k in range(bus_size):
                     data_o_list[i*4*bus_size+bus_size+k] = data_i[j*4*bus_size + 3*bus_size+k]
-                out_w_o_list[i*4+1] = in_w_i[j*4+3]
-                in_r_o_list[i*4+1] = out_r_i[j*4+3]
                 for k in range(bus_size):
                     data_o_list[j*4*bus_size+3*bus_size+k] = data_i[i*4*bus_size+bus_size+k]
-                out_w_o_list[j*4+3] = in_w_i[i*4+1]
-                in_r_o_list[j*4+3] = out_r_i[i*4+1]
-            # print(i, j, out_w_o_list)
-    return 'z'*add_z_n*4*bus_size + ''.join(data_o_list)[::-1], 'z'*add_z_n*4 + ''.join(out_w_o_list)[::-1], 'z'*add_z_n*4 + ''.join(in_r_o_list)[::-1]
+    return 'z'*add_z_n*4*bus_size + ''.join(data_o_list)[::-1]
 
 def test_gen(bus_size, routs_num, generator, add_z_n=0, **gen_kwargs):
     res_str = str()
     ports_num = 4
     in_data = '0'*(routs_num*ports_num*bus_size-ports_num) + '1'*ports_num
-    in_w = '0'*((routs_num-1)*ports_num+ports_num-1) + '1'
-    out_r = '0'*((routs_num-1)*ports_num+ports_num-1) + '1'
     for r in range(routs_num):
         for p in range(ports_num):
             res_str += f'// {r} router {p} port\n'
             # print(in_data, in_w, out_r)
-            for test in generator(data_i=in_data, in_w_i=in_w, out_r_i=out_r,
-                                  routs_num=routs_num, bus_size=bus_size,
-                                  add_z_n=add_z_n, **gen_kwargs):
-                res_str += test + '\n'
+            res_str += generator(data_i=in_data,
+                                routs_num=routs_num, bus_size=bus_size,
+                                add_z_n=add_z_n, **gen_kwargs) + '\n'
             in_data = str_l_shift(in_data, ports_num)
-            in_w = str_l_shift(in_w, 1)
-            out_r = str_l_shift(out_r, 1)
     return res_str
  
 if __name__ == '__main__':

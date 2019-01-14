@@ -9,7 +9,7 @@ module mesh2d_tb();
   // parameters for test data
   localparam                 tests_num = 4*4 + 6*4 + 6*4 + 9*4;
   localparam                 input_data_num = 0;
-  localparam                 exp_data_num = 3;
+  localparam                 exp_data_num = 1;
   // test_len must be a max data sequence len (may be input or output)
   localparam                 max_test_len = 9*ports_num*bus_size;
 
@@ -22,72 +22,46 @@ module mesh2d_tb();
   integer                    errors_num;
 
   // input regs
-  reg     [9*ports_num*bus_size-1:0] test_data_i;           
-  reg     [9*ports_num-1:0]          test_in_w;
-  reg     [9*ports_num-1:0]          test_out_r;
+  reg     [9*ports_num*bus_size-1:0] test_data_i;
   // output wires
   wire    [9*ports_num*bus_size-1:0] test_data_o [3:0];
-  wire    [9*ports_num-1:0]          test_out_w  [3:0];
-  wire    [9*ports_num-1:0]          test_in_r   [3:0];
   // expected outputs 
   wire    [9*ports_num*bus_size-1:0] exp_data_o;           
-  wire    [9*ports_num-1:0]          exp_out_w;
-  wire    [9*ports_num-1:0]          exp_in_r;
 
   topology_module #(
-    .BUS_SIZE     ( bus_size ), 
-    .NODES_NUM  ( 4 ), 
+    .PORT_SIZE    ( bus_size ), 
+    .NODES_NUM    ( 4 ), 
     .H_SIZE       ( 2 )
   ) mesh2d_4_2 (
     .data_i       ( test_data_i[4*ports_num*bus_size-1:0]    ),
-    .in_w_i       ( test_in_w[4*ports_num-1:0]               ),
-    .out_r_i      ( test_out_r[4*ports_num-1:0]              ),
-
-    .data_o       ( test_data_o[0][4*ports_num*bus_size-1:0] ),
-    .out_w_o      ( test_out_w[0][4*ports_num-1:0]           ),
-    .in_r_o       ( test_in_r[0][4*ports_num-1:0]            )
+    .data_o       ( test_data_o[0][4*ports_num*bus_size-1:0] )
   );
 
   topology_module #(
-    .BUS_SIZE     ( bus_size ), 
-    .NODES_NUM  ( 6 ), 
+    .PORT_SIZE    ( bus_size ), 
+    .NODES_NUM    ( 6 ), 
     .H_SIZE       ( 2 )
   ) mesh2d_6_2 (
     .data_i       ( test_data_i[6*ports_num*bus_size-1:0]    ),
-    .in_w_i       ( test_in_w[6*ports_num-1:0]               ),
-    .out_r_i      ( test_out_r[6*ports_num-1:0]              ),
-
-    .data_o       ( test_data_o[1][6*ports_num*bus_size-1:0] ),
-    .out_w_o      ( test_out_w[1][6*ports_num-1:0]           ),
-    .in_r_o       ( test_in_r[1][6*ports_num-1:0]            )
+    .data_o       ( test_data_o[1][6*ports_num*bus_size-1:0] )
   );
 
   topology_module #(
-    .BUS_SIZE     ( bus_size ), 
+    .PORT_SIZE     ( bus_size ), 
     .NODES_NUM  ( 6 ), 
     .H_SIZE       ( 3 )
   ) mesh2d_6_3 (
     .data_i       ( test_data_i[6*ports_num*bus_size-1:0]    ),
-    .in_w_i       ( test_in_w[6*ports_num-1:0]               ),
-    .out_r_i      ( test_out_r[6*ports_num-1:0]              ),
-
-    .data_o       ( test_data_o[2][6*ports_num*bus_size-1:0] ),
-    .out_w_o      ( test_out_w[2][6*ports_num-1:0]           ),
-    .in_r_o       ( test_in_r[2][6*ports_num-1:0]            )
+    .data_o       ( test_data_o[2][6*ports_num*bus_size-1:0] )
   );
 
   topology_module #(
-    .BUS_SIZE     ( bus_size ), 
-    .NODES_NUM  ( 9 ), 
+    .PORT_SIZE    ( bus_size ), 
+    .NODES_NUM    ( 9 ), 
     .H_SIZE       ( 3 )
   ) mesh2d_9_3 (
     .data_i       ( test_data_i[9*ports_num*bus_size-1:0]    ),
-    .in_w_i       ( test_in_w[9*ports_num-1:0]               ),
-    .out_r_i      ( test_out_r[9*ports_num-1:0]              ),
-
-    .data_o       ( test_data_o[3][9*ports_num*bus_size-1:0] ),
-    .out_w_o      ( test_out_w[3][9*ports_num-1:0]           ),
-    .in_r_o       ( test_in_r[3][9*ports_num-1:0]            )
+    .data_o       ( test_data_o[3][9*ports_num*bus_size-1:0] )
   );
 
   // clock signal generating
@@ -102,8 +76,6 @@ module mesh2d_tb();
   initial
     begin
       test_data_i = {{max_test_len-ports_num{1'b0}}, {bus_size{1'b1}}};
-      test_in_w = {{8*ports_num+ports_num-1{1'b0}}, 1'b1};
-      test_out_r = {{8*ports_num+ports_num-1{1'b0}}, 1'b1};
       test_idx = 0;
       out_idx = 0;
       exp_idx = 0;
@@ -112,17 +84,8 @@ module mesh2d_tb();
       $display("Test file has been read");
     end
 
-  // dump
-  initial
-    begin
-      $dumpfile("dumps/mesh2d_tb.vcd");
-      $dumpvars;
-    end
-
   // out data
   assign exp_data_o = test_data[test_idx*exp_data_num];
-  assign exp_out_w = test_data[test_idx*exp_data_num + 1];
-  assign exp_in_r = test_data[test_idx*exp_data_num + 2];
 
   // test data input and processing
   always @( posedge clk_r )  // setting input regs on a negative edge
@@ -130,27 +93,19 @@ module mesh2d_tb();
       #(period/4);
       // in data
       test_data_i = test_data_i <<< bus_size;
-      test_in_w = test_in_w <<< 1;
-      test_out_r = test_out_r <<< 1;
       // module idx
       case (test_idx)
         4*4:  begin
           out_idx = 1;
           test_data_i = {{max_test_len-ports_num{1'b0}}, {bus_size{1'b1}}};
-          test_in_w = {{8*ports_num+ports_num-1{1'b0}}, 1'b1};
-          test_out_r = {{8*ports_num+ports_num-1{1'b0}}, 1'b1};
         end
         4*4+4*6: begin
           out_idx = 2;
           test_data_i = {{max_test_len-ports_num{1'b0}}, {bus_size{1'b1}}};
-          test_in_w = {{8*ports_num+ports_num-1{1'b0}}, 1'b1};
-          test_out_r = {{8*ports_num+ports_num-1{1'b0}}, 1'b1};
         end
         4*4+4*6*2: begin
           out_idx = 3;
           test_data_i = {{max_test_len-ports_num{1'b0}}, {bus_size{1'b1}}};
-          test_in_w = {{8*ports_num+ports_num-1{1'b0}}, 1'b1};
-          test_out_r = {{8*ports_num+ports_num-1{1'b0}}, 1'b1};
         end
       endcase
     end
@@ -165,11 +120,10 @@ module mesh2d_tb();
           $finish;
         end
       // checking if outs are expected
-      if ( test_data_o[out_idx] !== exp_data_o || test_out_w[out_idx] !== exp_out_w || test_in_r[out_idx] !== exp_in_r )
+      if ( test_data_o[out_idx] !== exp_data_o)
         begin
           $display("Error in %d test", test_idx);
-          $display("Output:   %b, %b, %b\nExpected: %b, %b, %b", test_data_o[out_idx], test_out_w[out_idx], test_in_r[out_idx],
-                                                                 exp_data_o,           exp_out_w,           exp_in_r);
+          $display("Output:   %b\nExpected: %b", test_data_o[out_idx], exp_data_o);
           errors_num = errors_num + 1;
         end
       test_idx = test_idx + 1;
