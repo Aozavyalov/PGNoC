@@ -57,18 +57,18 @@ module transceiver #(
         state = SEND;
       end
     SEND:
-    begin
-      data_o[port_r*BUS_SIZE+:BUS_SIZE] = data_i;
-      wr_ready_out [port_r]             = 1'b1;
-      readed                            = 1'b1;
-      state                             = END;
-    end
+      if (!mem_empty)  // when queue has flit to send
+      begin
+        data_o[port_r*BUS_SIZE+:BUS_SIZE] = data_i;
+        wr_ready_out [port_r]             = 1'b1;
+        readed                            = 1'b1;
+        state                             = END;
+      end
     END:
       if (r_ready_in[port_r] === 1'b1) // if readed from transciever
       begin
         wr_ready_out[port_r] = 1'b0;
-        port_r = PORTS_NUM;
-        state  = WAIT;         // waiting another flit
+        state = (data_o[ADDR_SIZE] == 1) ? WAIT : SEND;
       end
     default: state = RESET;
     endcase
