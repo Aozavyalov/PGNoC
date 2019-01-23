@@ -39,41 +39,38 @@ module transceiver #(
     .port_num(port)
   );
 
-  always @(posedge clk, posedge a_rst)
+  always @(posedge clk, posedge a_rst) begin
+    readed = 1'b0;
+    if (a_rst) state = RESET;
+    case (state)
+    RESET:
     begin
-      readed = 1'b0;
-      if (a_rst)
-        state = RESET;
-      case (state)
-        RESET:
-          begin
-            wr_ready_out  = {PORTS_NUM+1{1'b0}};
-            port_r <= PORTS_NUM; // default will send to itself
-            state  <= WAIT;
-          end
-        WAIT:
-          if (!mem_empty)  // when queue has flit to send
-            begin
-              if (r_ready_in[port] !== 1'bz) // if connected
-                port_r <= port;         // save port num
-              state <= SEND;
-            end
-        SEND:
-          begin
-            data_o[port_r*BUS_SIZE+:BUS_SIZE] <= data_i;
-            wr_ready_out [port_r]                    <= 1'b1;
-            readed                            <= 1'b1;
-            state                             <= END;
-          end
-        END:
-          if (r_ready_in[port_r] === 1'b1) // if readed from transciever
-            begin
-              wr_ready_out[port_r] <= 1'b0;
-              port_r <= PORTS_NUM;
-              state  <= WAIT;         // waiting another flit
-            end
-        default:
-          state <= RESET;
-      endcase
+      wr_ready_out  = {PORTS_NUM+1{1'b0}};
+      port_r = PORTS_NUM; // default will send to itself
+      state  = WAIT;
     end
+    WAIT:
+      if (!mem_empty)  // when queue has flit to send
+      begin
+        if (r_ready_in[port] !== 1'bz) // if connected
+          port_r = port;         // save port num
+        state = SEND;
+      end
+    SEND:
+    begin
+      data_o[port_r*BUS_SIZE+:BUS_SIZE] = data_i;
+      wr_ready_out [port_r]             = 1'b1;
+      readed                            = 1'b1;
+      state                             = END;
+    end
+    END:
+      if (r_ready_in[port_r] === 1'b1) // if readed from transciever
+      begin
+        wr_ready_out[port_r] = 1'b0;
+        port_r = PORTS_NUM;
+        state  = WAIT;         // waiting another flit
+      end
+    default: state = RESET;
+    endcase
+  end
 endmodule
