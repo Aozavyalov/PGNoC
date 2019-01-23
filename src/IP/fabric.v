@@ -63,7 +63,7 @@ module fabric #(
   integer log_file;
   initial
     if (!DEBUG)
-      log_file = $fopen({`LOGS_PATH, "/fabric_", itoa(ADDR)});
+      log_file = $fopen({`LOGS_PATH, "/fabric_", itoa(ADDR), ".log"});
 
   // generating data to send
   always @(posedge clk, posedge a_rst)

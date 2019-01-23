@@ -1,4 +1,5 @@
 import argparse
+import re
 from os import listdir
 
 def arg_parser_create():
@@ -12,32 +13,34 @@ def arg_parser_create():
 def parse_logs(path_to_logs, flit_len=38):
   logs = list()
   files_to_read = listdir(path_to_logs)
+  log_name_regex = re.compile(r"fabric_\d{4}.log")
   for logname in files_to_read:
-    with open(f"{path_to_logs}/{logname}", 'r') as logfile:
-      for line in logfile:
-        log = dict()
-        splitted = line.split('|')
-        log['time'] = int(splitted[0])
-        log['addr'] = int(splitted[1], base=16)
-        log['stat'] = splitted[2]
-        if log['stat'] == "new package":
-          log['pack_len'] = int(splitted[3].split()[1], base=16)
-          log['dest_addr'] = int(splitted[4].split()[1], base=16)
-        elif log['stat'] == "flit sended":
-          log['flit'] = splitted[3][-2::-1]  # reverse for better usability
-        elif log['stat'] == "package sended":
-          log['packs_sended'] = int(splitted[3])
-        elif log['stat'] == "finish generating":
-          log['packs_sended'] = int(splitted[3])
-        elif log['stat'] == "recved flit":
-          log['flit_num'] = int(splitted[3]) + 1
-          log['flit'] = splitted[4][-2::-1]
-        elif log['stat'] == "recved wrong flit":
-          log['real_addr'] = splitted[3].split()[1]
-          log['flit'] = splitted[4][-2::-1]
-        elif log['stat'] == "recved package":
-          log['packs_recv'] = int(splitted[3].split()[1])
-        logs.append(log)
+    if log_name_regex.match(logname):
+      with open(f"{path_to_logs}/{logname}", 'r') as logfile:
+        for line in logfile:
+          log = dict()
+          splitted = line.split('|')
+          log['time'] = int(splitted[0])
+          log['addr'] = int(splitted[1], base=16)
+          log['stat'] = splitted[2]
+          if log['stat'] == "new package":
+            log['pack_len'] = int(splitted[3].split()[1], base=16)
+            log['dest_addr'] = int(splitted[4].split()[1], base=16)
+          elif log['stat'] == "flit sended":
+            log['flit'] = splitted[3][-2::-1]  # reverse for better usability
+          elif log['stat'] == "package sended":
+            log['packs_sended'] = int(splitted[3])
+          elif log['stat'] == "finish generating":
+            log['packs_sended'] = int(splitted[3])
+          elif log['stat'] == "recved flit":
+            log['flit_num'] = int(splitted[3]) + 1
+            log['flit'] = splitted[4][-2::-1]
+          elif log['stat'] == "recved wrong flit":
+            log['real_addr'] = splitted[3].split()[1]
+            log['flit'] = splitted[4][-2::-1]
+          elif log['stat'] == "recved package":
+            log['packs_recv'] = int(splitted[3].split()[1])
+          logs.append(log)
   return logs
 
 def make_stats(logs):
