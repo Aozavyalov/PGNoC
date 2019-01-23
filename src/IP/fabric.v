@@ -1,10 +1,6 @@
 `timescale 1ns / 1ns
 `include "../../src/configs.vh"
 
-`ifndef ADD_MOD
-`define ADD_MOD(a,b,len) (((a)+(b)<(len))?((a)+(b)):((a)+(b)-(len)))
-`endif
-
 module fabric #(
   parameter  DATA_SIZE    = 32,
   parameter  ADDR_SIZE    = 4,
@@ -76,17 +72,9 @@ module fabric #(
       case (gen_state)
         PACK_GEN:
           begin
-            if (DEBUG)
-              begin
-                pack_len = MAX_PACK_LEN;
-                dest_addr = `ADD_MOD(ADDR, 1, NODES_NUM);
-              end
-            else
-              begin
-                pack_len = $urandom % MAX_PACK_LEN;
-                dest_addr = $urandom % NODES_NUM;
-              end
-            if (DEBUG || !DEBUG & dest_addr != ADDR)
+            pack_len = $urandom % MAX_PACK_LEN;
+            dest_addr = $urandom % NODES_NUM;
+            if (dest_addr != ADDR)
               begin
                 gen_state = FLIT_GEN;
                 if (DEBUG)
