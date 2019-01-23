@@ -181,9 +181,9 @@ module fabric #(
                   recv_packs = recv_packs + 1;
                   recv_flits = 0;
                   if (DEBUG)
-                    $display("%5d|%3h|recved package|packeges: %2d", time_reg, ADDR, recv_packs);
+                    $display("%5d|%3h|recved package|packages: %2d", time_reg, ADDR, recv_packs);
                   else
-                    $fdisplay(log_file, "%5d|%3h|recved package|packeges: %2d", time_reg, ADDR, recv_packs);
+                    $fdisplay(log_file, "%5d|%3h|recved package|packages: %2d", time_reg, ADDR, recv_packs);
                 end
               else
                 recv_flits = recv_flits + 1;
