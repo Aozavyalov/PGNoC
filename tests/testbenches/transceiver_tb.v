@@ -20,15 +20,15 @@ module transceiver_tb();
   // input data
   reg                               rst_t; 
   reg                               is_empty_t;
-  reg                 [ports_num:0] out_w_t;
+  reg                 [ports_num:0] r_ready_in_t;
   reg                [bus_size-1:0] data_i_t;
   // output data
   wire                              r_req_t;
-  wire                [ports_num:0] out_r_t;
+  wire                [ports_num:0] wr_ready_out_t;
   wire [bus_size*(ports_num+1)-1:0] data_o_t;
   // output expected data
   reg                               r_req_exp;
-  reg                 [ports_num:0] out_r_exp;
+  reg                 [ports_num:0] wr_ready_out_exp;
   reg  [bus_size*(ports_num+1)-1:0] data_o_exp;
 
   transceiver #(
@@ -39,10 +39,10 @@ module transceiver_tb();
     .clk   (clk_r),
     .a_rst (rst_t),
     .empty (is_empty_t),
-    .out_w (out_w_t),
+    .r_ready_in (r_ready_in_t),
     .data_i(data_i_t),
     .r_req (r_req_t),
-    .out_r (out_r_t),
+    .wr_ready_out (wr_ready_out_t),
     .data_o(data_o_t)
   );
 
@@ -67,15 +67,15 @@ module transceiver_tb();
     end
 
   always @(posedge clk_r)
-    {rst_t, is_empty_t, out_w_t, data_i_t, r_req_exp, out_r_exp, data_o_exp} = test_data[test_idx];
+    {rst_t, is_empty_t, r_ready_in_t, data_i_t, r_req_exp, wr_ready_out_exp, data_o_exp} = test_data[test_idx];
 
   always @(posedge clk_r)
     begin
       #(period/4); // waiting for changing
-      $display("%4d Output  : state = %d, r_req = %b, out_r = %b, data_o = %b\n", test_idx, test_trans.state, r_req_t, out_r_t, data_o_t);
-      if (r_req_exp !== r_req_t || out_r_exp !== out_r_t || data_o_exp !== data_o_t)
+      $display("%4d Output  : state = %d, r_req = %b, wr_ready_out = %b, data_o = %b\n", test_idx, test_trans.state, r_req_t, wr_ready_out_t, data_o_t);
+      if (r_req_exp !== r_req_t || wr_ready_out_exp !== wr_ready_out_t || data_o_exp !== data_o_t)
         begin
-          $display("Error, expected: r_req = %b, out_r = %b, data_o = %b\n", r_req_exp, out_r_exp, data_o_exp);
+          $display("Error, expected: r_req = %b, wr_ready_out = %b, data_o = %b\n", r_req_exp, wr_ready_out_exp, data_o_exp);
           errors_num = errors_num + 1;
         end
       test_idx = test_idx + 1;

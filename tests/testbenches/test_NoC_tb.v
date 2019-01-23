@@ -48,17 +48,17 @@ module test_NoC_tb();
         // ip to switcher
         wire [flit_size-1:0] ip_data_o;
         wire [flit_size-1:0] ip_data_i;
-        wire                 ip_in_w  ;
-        wire                 ip_out_r ;
-        wire                 ip_in_r  ;
-        wire                 ip_out_w ;
+        wire                 ip_r_ready_out  ;
+        wire                 ip_wr_ready_out ;
+        wire                 ip_wr_ready_in  ;
+        wire                 ip_r_ready_in ;
         // switcher to adapter
         wire [flit_size*ports_num-1:0] sw_data_i;
         wire [flit_size*ports_num-1:0] sw_data_o;
-        wire [ports_num-1:0]           sw_in_w ;
-        wire [ports_num-1:0]           sw_out_r;
-        wire [ports_num-1:0]           sw_in_r ;
-        wire [ports_num-1:0]           sw_out_w;
+        wire [ports_num-1:0]           sw_r_ready_out ;
+        wire [ports_num-1:0]           sw_wr_ready_out;
+        wire [ports_num-1:0]           sw_wr_ready_in ;
+        wire [ports_num-1:0]           sw_r_ready_in;
         // IP i
         fabric #(
           .DATA_SIZE(data_size),
@@ -74,10 +74,10 @@ module test_NoC_tb();
           .a_rst    (rst_r),
           .data_i   (ip_data_i),
           .data_o   (ip_data_o),
-          .out_w    (ip_out_w ),
-          .in_r     (ip_in_r  ),
-          .out_r    (ip_out_r ),
-          .in_w     (ip_in_w  )
+          .r_ready_in    (ip_r_ready_in ),
+          .wr_ready_in     (ip_wr_ready_in  ),
+          .wr_ready_out    (ip_wr_ready_out ),
+          .r_ready_out     (ip_r_ready_out  )
         );
         // switch i
         switch #(
@@ -90,11 +90,11 @@ module test_NoC_tb();
         ) SW (
           .clk   (clk_r),
           .a_rst (rst_r),
-          .in_r  ({ip_out_r , sw_in_r  }),
-          .out_w ({ip_in_w  , sw_out_w }),
+          .wr_ready_in  ({ip_wr_ready_out , sw_wr_ready_in  }),
+          .r_ready_in ({ip_r_ready_out  , sw_r_ready_in }),
           .data_i({ip_data_o, sw_data_i}),
-          .in_w  ({ip_out_w , sw_in_w  }),
-          .out_r ({ip_in_r  , sw_out_r }),
+          .r_ready_out  ({ip_r_ready_in , sw_r_ready_out  }),
+          .wr_ready_out ({ip_wr_ready_in  , sw_wr_ready_out }),
           .data_o({ip_data_i, sw_data_o})
         );
         // switch to connector adapter
@@ -102,8 +102,8 @@ module test_NoC_tb();
           .FLIT_SIZE(flit_size),
           .PORTS_NUM(ports_num)
         ) out_adapter (
-          .in_w   (sw_in_w                      ),
-          .out_r  (sw_out_r                     ),
+          .r_ready_out   (sw_r_ready_out                      ),
+          .wr_ready_out  (sw_wr_ready_out                     ),
           .sw_data(sw_data_o                    ),
           .bus    (conn_in[i*bus_size+:bus_size])
         );
@@ -113,8 +113,8 @@ module test_NoC_tb();
           .PORTS_NUM(ports_num)
         ) in_adapter (
           .bus    (conn_out[i*bus_size+:bus_size]),
-          .in_r   (sw_in_r                       ),
-          .out_w  (sw_out_w                      ),
+          .wr_ready_in   (sw_wr_ready_in                       ),
+          .r_ready_in  (sw_r_ready_in                      ),
           .sw_data(sw_data_i                     )
         );
       end

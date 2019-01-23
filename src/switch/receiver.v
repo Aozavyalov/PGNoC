@@ -8,11 +8,11 @@ module receiver #(
   input                               a_rst,
 
   input                               is_full,
-  input  [               PORTS_NUM:0] in_r,
+  input  [               PORTS_NUM:0] wr_ready_in,
   input  [(PORTS_NUM+1)*BUS_SIZE-1:0] data_i,
 
   output reg                          wr_req,
-  output reg [           PORTS_NUM:0] in_w,
+  output reg [           PORTS_NUM:0] r_ready_out,
   output reg [          BUS_SIZE-1:0] data_o
 );
   // states
@@ -27,7 +27,7 @@ module receiver #(
   always @(posedge clk, posedge a_rst)
     begin
       // data_o = data_i[port*BUS_SIZE+:BUS_SIZE];
-      in_w   = {PORTS_NUM+1{1'b0}};
+      r_ready_out   = {PORTS_NUM+1{1'b0}};
       wr_req = 1'b0;
       if (a_rst)
         state = RESET;
@@ -41,16 +41,16 @@ module receiver #(
           begin
             if (!is_full)
               for (i = 0; (i < PORTS_NUM + 1) & state == SEARCH; i = i + 1)
-                if (in_r[port] === 1'b1)
+                if (wr_ready_in[port] === 1'b1)
                   state = WRITE;
                 else
                   port = port + 1'b1;
           end
         WRITE:
           begin
-            if (in_r[port] === 1'b1 & !is_full)
+            if (wr_ready_in[port] === 1'b1 & !is_full)
               begin
-                in_w[port] = 1'b1;
+                r_ready_out[port] = 1'b1;
                 wr_req     = 1'b1;
                 data_o     = data_i[port*BUS_SIZE+:BUS_SIZE];
                 state      = END;

@@ -9,11 +9,11 @@ module switch #(
 ) (
   input                               clk   ,
   input                               a_rst ,
-  input                 [PORTS_NUM:0] in_r  ,
-  input                 [PORTS_NUM:0] out_w ,
+  input                 [PORTS_NUM:0] wr_ready_in  ,
+  input                 [PORTS_NUM:0] r_ready_in ,
   input  [BUS_SIZE*(PORTS_NUM+1)-1:0] data_i,
-  output                [PORTS_NUM:0] in_w  ,
-  output                [PORTS_NUM:0] out_r ,
+  output                [PORTS_NUM:0] r_ready_out  ,
+  output                [PORTS_NUM:0] wr_ready_out ,
   output [BUS_SIZE*(PORTS_NUM+1)-1:0] data_o
 );
 
@@ -33,10 +33,10 @@ module switch #(
     .clk    (clk),
     .a_rst  (a_rst),
     .is_full(is_full),
-    .in_r   (in_r),
+    .wr_ready_in   (wr_ready_in),
     .data_i (data_i),
     .wr_req (wr_req),
-    .in_w   (in_w),
+    .r_ready_out   (r_ready_out),
     .data_o (to_mem)
   );
 
@@ -64,10 +64,10 @@ module switch #(
     .clk   (clk),
     .a_rst (a_rst),
     .mem_empty(is_empty),
-    .out_w (out_w),
+    .r_ready_in (r_ready_in),
     .data_i(from_mem),
     .readed(readed),
-    .out_r (out_r),
+    .wr_ready_out (wr_ready_out),
     .data_o(data_o)
   );
 endmodule
@@ -77,15 +77,15 @@ module sw_to_connector #(
   parameter PORTS_NUM = 4,
   localparam PORT_SIZE = (FLIT_SIZE + 2)
 )(
-  input            [PORTS_NUM-1:0] in_w   ,
-  input            [PORTS_NUM-1:0] out_r  ,
+  input            [PORTS_NUM-1:0] r_ready_out   ,
+  input            [PORTS_NUM-1:0] wr_ready_out  ,
   input  [FLIT_SIZE*PORTS_NUM-1:0] sw_data,
   output [PORT_SIZE*PORTS_NUM-1:0] bus
 );
   genvar i;
   generate
     for (i = 0; i < PORTS_NUM; i = i + 1)
-      assign bus[i*PORT_SIZE+:PORT_SIZE] = {sw_data[i*FLIT_SIZE+:FLIT_SIZE], in_w[i], out_r[i]};
+      assign bus[i*PORT_SIZE+:PORT_SIZE] = {sw_data[i*FLIT_SIZE+:FLIT_SIZE], r_ready_out[i], wr_ready_out[i]};
   endgenerate
 endmodule // sw_to_connector
 
@@ -95,13 +95,13 @@ module connector_to_sw #(
   localparam PORT_SIZE = (FLIT_SIZE + 2)
 )(
   input  [PORT_SIZE*PORTS_NUM-1:0] bus   ,
-  output           [PORTS_NUM-1:0] in_r  ,
-  output           [PORTS_NUM-1:0] out_w ,
+  output           [PORTS_NUM-1:0] wr_ready_in  ,
+  output           [PORTS_NUM-1:0] r_ready_in ,
   output [FLIT_SIZE*PORTS_NUM-1:0] sw_data
 );
   genvar i;
   generate
     for (i = 0; i < PORTS_NUM; i = i + 1)
-      assign {sw_data[i*FLIT_SIZE+:FLIT_SIZE], out_w[i], in_r[i]} = bus[i*PORT_SIZE+:PORT_SIZE];
+      assign {sw_data[i*FLIT_SIZE+:FLIT_SIZE], r_ready_in[i], wr_ready_in[i]} = bus[i*PORT_SIZE+:PORT_SIZE];
   endgenerate
 endmodule // connector_to_sw

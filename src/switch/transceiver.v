@@ -9,11 +9,11 @@ module transceiver #(
   input                                   clk,
   input                                   a_rst,
   input                                   mem_empty,
-  input      [PORTS_NUM:0]                out_w,
+  input      [PORTS_NUM:0]                r_ready_in,
   input      [BUS_SIZE-1:0]               data_i,
 
   output reg                              readed,
-  output reg [PORTS_NUM:0]                out_r,
+  output reg [PORTS_NUM:0]                wr_ready_out,
   output reg [BUS_SIZE*(PORTS_NUM+1)-1:0] data_o
 );
 
@@ -47,28 +47,28 @@ module transceiver #(
       case (state)
         RESET:
           begin
-            out_r  = {PORTS_NUM+1{1'b0}};
+            wr_ready_out  = {PORTS_NUM+1{1'b0}};
             port_r <= PORTS_NUM; // default will send to itself
             state  <= WAIT;
           end
         WAIT:
           if (!mem_empty)  // when queue has flit to send
             begin
-              if (out_w[port] !== 1'bz) // if connected
+              if (r_ready_in[port] !== 1'bz) // if connected
                 port_r <= port;         // save port num
               state <= SEND;
             end
         SEND:
           begin
             data_o[port_r*BUS_SIZE+:BUS_SIZE] <= data_i;
-            out_r [port_r]                    <= 1'b1;
+            wr_ready_out [port_r]                    <= 1'b1;
             readed                            <= 1'b1;
             state                             <= END;
           end
         END:
-          if (out_w[port_r] === 1'b1) // if readed from transciever
+          if (r_ready_in[port_r] === 1'b1) // if readed from transciever
             begin
-              out_r[port_r] <= 1'b0;
+              wr_ready_out[port_r] <= 1'b0;
               port_r <= PORTS_NUM;
               state  <= WAIT;         // waiting another flit
             end

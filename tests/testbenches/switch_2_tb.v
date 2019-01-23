@@ -24,10 +24,10 @@ module switch_2_tb();
     .a_rst    (rst_r),
     .data_i   (data_ip_in [i]),
     .data_o   (data_ip_out[i]),
-    .out_w    (out_w_ip_sw[i]),
-    .in_r     (in_r_ip_sw [i]),
-    .out_r    (out_r_ip_sw[i]),
-    .in_w     (in_w_ip_sw [i])
+    .r_ready_in    (r_ready_in_ip_sw[i]),
+    .wr_ready_in     (wr_ready_in_ip_sw [i]),
+    .wr_ready_out    (wr_ready_out_ip_sw[i]),
+    .r_ready_out     (r_ready_out_ip_sw [i])
   );
 
   fabric #(

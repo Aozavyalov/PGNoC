@@ -15,10 +15,10 @@ module switch_tb();
   reg clk_r;
   reg rst_r;
 
-  wire [ports_num:0] ip_in_w;
-  wire [ports_num:0] ip_out_r;
-  wire [ports_num:0] sw_in_w;
-  wire [ports_num:0] sw_out_r;
+  wire [ports_num:0] ip_r_ready_out;
+  wire [ports_num:0] ip_wr_ready_out;
+  wire [ports_num:0] sw_r_ready_out;
+  wire [ports_num:0] sw_wr_ready_out;
   wire [(ports_num+1)*bus_size-1:0] ip_data_o;
   wire [(ports_num+1)*bus_size-1:0] sw_data_o;
 
@@ -33,11 +33,11 @@ module switch_tb();
   ) sw (
     .clk   (clk_r),
     .a_rst (rst_r),
-    .in_r  (ip_out_r),
-    .out_w (ip_in_w),
+    .wr_ready_in  (ip_wr_ready_out),
+    .r_ready_in (ip_r_ready_out),
     .data_i(ip_data_o),
-    .in_w  (sw_in_w),
-    .out_r (sw_out_r),
+    .r_ready_out  (sw_r_ready_out),
+    .wr_ready_out (sw_wr_ready_out),
     .data_o(sw_data_o)
   );
 
@@ -57,10 +57,10 @@ module switch_tb();
         .a_rst    (rst_r),
         .data_i   (sw_data_o[(i-1)*bus_size+:bus_size]),
         .data_o   (ip_data_o[(i-1)*bus_size+:bus_size]),
-        .out_w    (sw_in_w[i-1]),
-        .in_r     (sw_out_r[i-1]),
-        .out_r    (ip_out_r[i-1]),
-        .in_w     (ip_in_w[i-1])
+        .r_ready_in    (sw_r_ready_out[i-1]),
+        .wr_ready_in     (sw_wr_ready_out[i-1]),
+        .wr_ready_out    (ip_wr_ready_out[i-1]),
+        .r_ready_out     (ip_r_ready_out[i-1])
       );
   endgenerate
 
@@ -78,10 +78,10 @@ module switch_tb();
     .a_rst    (rst_r),
     .data_i   (sw_data_o[4*bus_size+:bus_size]),
     .data_o   (ip_data_o[4*bus_size+:bus_size]),
-    .out_w    (sw_in_w[4]),
-    .in_r     (sw_out_r[4]),
-    .out_r    (ip_out_r[4]),
-    .in_w     (ip_in_w[4])
+    .r_ready_in    (sw_r_ready_out[4]),
+    .wr_ready_in     (sw_wr_ready_out[4]),
+    .wr_ready_out    (ip_wr_ready_out[4]),
+    .r_ready_out     (ip_r_ready_out[4])
   );
 
   initial

@@ -18,15 +18,15 @@ module receiver_tb();
   // input data
   reg                                              rst_t; 
   reg                                              is_full_t;
-  reg                                [ports_num:0] in_r_t;
+  reg                                [ports_num:0] wr_ready_in_t;
   reg  [(data_size+addr_size+1)*(ports_num+1)-1:0] data_i_t;
   // output data
   wire                                             wr_req_t;
-  wire                               [ports_num:0] in_w_t;
+  wire                               [ports_num:0] r_ready_out_t;
   wire                     [data_size+addr_size:0] data_o_t;
   // output expected data
   reg                                              wr_req_exp;
-  reg                                [ports_num:0] in_w_exp;
+  reg                                [ports_num:0] r_ready_out_exp;
   reg                      [data_size+addr_size:0] data_o_exp;
 
   receiver #(
@@ -37,10 +37,10 @@ module receiver_tb();
     .clk    ( clk_r     ),
     .a_rst  ( rst_t     ),
     .is_full( is_full_t ),
-    .in_r   ( in_r_t    ),
+    .wr_ready_in   ( wr_ready_in_t    ),
     .data_i ( data_i_t  ),
     .wr_req ( wr_req_t  ),
-    .in_w   ( in_w_t    ),
+    .r_ready_out   ( r_ready_out_t    ),
     .data_o ( data_o_t  )
   );
 
@@ -65,15 +65,15 @@ module receiver_tb();
     end
 
   always @(posedge clk_r)
-    {rst_t, is_full_t, in_r_t, data_i_t, wr_req_exp, in_w_exp, data_o_exp} = test_data[test_idx];
+    {rst_t, is_full_t, wr_ready_in_t, data_i_t, wr_req_exp, r_ready_out_exp, data_o_exp} = test_data[test_idx];
 
   always @(posedge clk_r)
     begin
       #(period/4); // waiting for changing
-      $display("%4d Output  : state = %d, wr_req = %b, in_w = %b, data_o = %b\n", test_idx, test_recv.state, wr_req_t, in_w_t, data_o_t);
-      if (wr_req_exp !== wr_req_t || in_w_exp !== in_w_t || data_o_exp !== data_o_t)
+      $display("%4d Output  : state = %d, wr_req = %b, r_ready_out = %b, data_o = %b\n", test_idx, test_recv.state, wr_req_t, r_ready_out_t, data_o_t);
+      if (wr_req_exp !== wr_req_t || r_ready_out_exp !== r_ready_out_t || data_o_exp !== data_o_t)
         begin
-          $display("Error, expected: wr_req = %b, in_w = %b, data_o = %b\n", wr_req_exp, in_w_exp, data_o_exp);
+          $display("Error, expected: wr_req = %b, r_ready_out = %b, data_o = %b\n", wr_req_exp, r_ready_out_exp, data_o_exp);
           errors_num = errors_num + 1;
         end
       test_idx = test_idx + 1;

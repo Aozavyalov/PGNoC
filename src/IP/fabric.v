@@ -18,11 +18,11 @@ module fabric #(
 ) (
   input                     clk,
   input                     a_rst,
-  input                     in_r,
-  input                     out_w,
+  input                     wr_ready_in,
+  input                     r_ready_in,
   input      [BUS_SIZE-1:0] data_i,
-  output reg                in_w,
-  output reg                out_r,
+  output reg                r_ready_out,
+  output reg                wr_ready_out,
   output reg [BUS_SIZE-1:0] data_o
 );
 
@@ -96,11 +96,11 @@ module fabric #(
               end
           end
         FLIT_GEN:
-          if (out_w == 1'b0)
+          if (r_ready_in == 1'b0)
             if (freq_cntr == FREQ - 1)
               begin
                 freq_cntr = 0;
-                out_r = 1'b1;
+                wr_ready_out = 1'b1;
                 gen_data = $urandom;
                 data_o = {gen_data, (pack_len == 0 ? 1'b1 : 1'b0), dest_addr};  
                 if (DEBUG)     
@@ -112,9 +112,9 @@ module fabric #(
             else
               freq_cntr = freq_cntr + 1;
         FLIT_SEND:
-          if (out_w == 1'b1)
+          if (r_ready_in == 1'b1)
             begin
-              out_r = 1'b0;
+              wr_ready_out = 1'b0;
               if (DEBUG)
                 $display("%5d|%3h|flit sended|%b", time_reg, ADDR, data_o);
               else
@@ -161,9 +161,9 @@ module fabric #(
       if (!a_rst)
       case (recv_state)
         WAIT:
-          if (in_r == 1'b1)
+          if (wr_ready_in == 1'b1)
             begin
-              in_w       = 1'b1;
+              r_ready_out       = 1'b1;
               recv_state = GET;
               recv_packs = 0;
               if (DEBUG)
@@ -172,9 +172,9 @@ module fabric #(
                 $fdisplay(log_file, "%5d|%3h|wait for reading", time_reg, ADDR);
             end
         GET:
-          if (in_r == 1'b0)
+          if (wr_ready_in == 1'b0)
             begin
-              in_w = 1'b0;
+              r_ready_out = 1'b0;
               if (ADDR != data_i[ADDR_SIZE-1:0])  // if wrong address
                 begin
                   if (DEBUG)
@@ -208,12 +208,12 @@ module fabric #(
   always @(posedge clk, posedge a_rst)
     if (a_rst)
       begin
-        out_r           <= 1'b0;
+        wr_ready_out           <= 1'b0;
         gen_state       <= PACK_GEN;
         pack_len        <= 0;
         generated_packs <= 0;
         freq_cntr       <= 0;
-        in_w            <= 1'b0;
+        r_ready_out            <= 1'b0;
         recv_state      <= WAIT;
         recv_flits      <= 0;
         wrong_packs     <= 0;
