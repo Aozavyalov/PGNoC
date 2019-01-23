@@ -34,36 +34,11 @@ module fabric #(
   reg [ADDR_SIZE-1:0] dest_addr;
   reg [DATA_SIZE-1:0] gen_data;
 
-  function [4*8-1:0] itoa;
-    input [31:0] int;
-    integer i;
-      for (i = 0; i < 4; i = i + 1)
-        case (int[i*4+:4])
-          4'h0: itoa[i*8+:8] = "0";
-          4'h1: itoa[i*8+:8] = "1";
-          4'h2: itoa[i*8+:8] = "2";
-          4'h3: itoa[i*8+:8] = "3";
-          4'h4: itoa[i*8+:8] = "4";
-          4'h5: itoa[i*8+:8] = "5";
-          4'h6: itoa[i*8+:8] = "6";
-          4'h7: itoa[i*8+:8] = "7";
-          4'h8: itoa[i*8+:8] = "8";
-          4'h9: itoa[i*8+:8] = "9";
-          4'ha: itoa[i*8+:8] = "a";
-          4'hb: itoa[i*8+:8] = "b";
-          4'hc: itoa[i*8+:8] = "c";
-          4'hd: itoa[i*8+:8] = "d";
-          4'he: itoa[i*8+:8] = "e";
-          4'hf: itoa[i*8+:8] = "f";
-          default: itoa[i*8+:8] = "0";
-        endcase
-  endfunction
-
   // open log file
   integer log_file;
   initial
     if (!DEBUG)
-      log_file = $fopen({`LOGS_PATH, "/fabric_", itoa(ADDR), ".log"});
+      log_file = $fopen({`LOGS_PATH, "/logs"});
 
   // generating data to send
   always @(posedge clk, posedge a_rst)
