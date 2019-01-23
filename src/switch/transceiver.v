@@ -52,8 +52,8 @@ module transceiver #(
     WAIT:
       if (!mem_empty)  // when queue has flit to send
       begin
-        if (r_ready_in[port] !== 1'bz) // if connected
-          port_r = port;         // save port num
+        // if connected save port num, else PORTS_NUM to send back
+        port_r = (r_ready_in[port] !== 1'bz) ? port : PORTS_NUM;
         state = SEND;
       end
     SEND:
