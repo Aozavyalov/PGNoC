@@ -3,7 +3,7 @@
 /NoC_py_env
 /Stats develop.ipynb
 /tests/testfiles/*
-/tests/logs/*
+*/logs
 /routing_tables
 /stats
 */sim
