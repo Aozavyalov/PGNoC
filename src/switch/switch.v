@@ -19,7 +19,7 @@ module switch #(
 
   wire is_full;
   wire wr_req;
-  wire readed;
+  wire mem_readed;
   wire is_empty;
   wire wr_en;
   wire [BUS_SIZE-1:0] to_mem;
@@ -47,7 +47,7 @@ module switch #(
     .clk   (clk),
     .a_rst (a_rst),
     .wr_req(wr_req),
-    .readed(readed),
+    .mem_readed(mem_readed),
     .data_i(to_mem),
     .full  (is_full),
     .empty (is_empty),
@@ -66,7 +66,7 @@ module switch #(
     .mem_empty(is_empty),
     .r_ready_in (r_ready_in),
     .data_i(from_mem),
-    .readed(readed),
+    .mem_readed(mem_readed),
     .wr_ready_out (wr_ready_out),
     .data_o(data_o)
   );

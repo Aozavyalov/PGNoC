@@ -12,7 +12,7 @@ module transceiver #(
   input      [PORTS_NUM:0]                r_ready_in,
   input      [BUS_SIZE-1:0]               data_i,
 
-  output reg                              readed,
+  output reg                              mem_readed,
   output reg [PORTS_NUM:0]                wr_ready_out,
   output reg [BUS_SIZE*(PORTS_NUM+1)-1:0] data_o
 );
@@ -40,7 +40,7 @@ module transceiver #(
   );
 
   always @(posedge clk, posedge a_rst) begin
-    readed = 1'b0;
+    mem_readed = 1'b0;
     if (a_rst) state = RESET;
     case (state)
     RESET:
@@ -61,11 +61,11 @@ module transceiver #(
       begin
         data_o[port_r*BUS_SIZE+:BUS_SIZE] = data_i;
         wr_ready_out [port_r]             = 1'b1;
-        readed                            = 1'b1;
+        mem_readed                            = 1'b1;
         state                             = END;
       end
     END:
-      if (r_ready_in[port_r] === 1'b1) // if readed from transciever
+      if (r_ready_in[port_r] === 1'b1) // if mem_readed from transciever
       begin
         wr_ready_out[port_r] = 1'b0;
         state = (data_o[ADDR_SIZE] == 1) ? WAIT : SEND;
