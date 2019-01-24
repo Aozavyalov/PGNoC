@@ -2,7 +2,7 @@ import argparse
 
 def arg_parser_create():
     parser = argparse.ArgumentParser(description="Script for getting statistics of NoC work from generated files.")
-    parser.add_argument('logs', type=str, help="Path to a logfile.")
+    parser.add_argument('logs_file', type=str, help="Path to a logfile.")
     parser.add_argument('-f', '--flit_len', default=38, type=int, help="Length of flit.")
     parser.add_argument('-s', '--savefile', type=str, nargs='?', help="File to save statistics. If not specified, it will print to console.")
     args = parser.parse_args()
@@ -124,7 +124,7 @@ def result_former(stats):
 
 if __name__ == "__main__":
   args = arg_parser_create()
-  logs = parse_logs(args.logs_path)
+  logs = parse_logs(args.logs_file)
   if logs:
     stats = make_stats(logs)
     res_string = result_former(stats)
