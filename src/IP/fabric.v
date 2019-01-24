@@ -108,7 +108,7 @@ module fabric #(
     default: gen_state = RESET;
   endcase
 
-  localparam WAIT = 1'h0, GET = 1'h1;
+  localparam GET_FLIT = 1'h0, ACCEPT = 1'h1;
   reg [2:0] recv_state;
   integer recv_flits;
   integer wrong_packs;
@@ -117,21 +117,11 @@ module fabric #(
   // receiving data
   always @(posedge clk, posedge a_rst)
     case (recv_state)
-    WAIT:
+    GET_FLIT:
       if (wr_ready_in == 1'b1)
       begin
         r_ready_out = 1'b1;
-        recv_state  = GET;
-        recv_packs  = 0;
-        if (DEBUG)
-          $display("%5d|%3h|wait for reading", time_reg, ADDR);
-        else
-          $fdisplay(log_file, "%5d|%3h|wait for reading", time_reg, ADDR);
-      end
-    GET:
-      if (wr_ready_in == 1'b0)
-      begin
-        r_ready_out = 1'b0;
+        recv_state  = ACCEPT;
         if (ADDR != data_i[ADDR_SIZE-1:0])  // if wrong address
         begin
           if (DEBUG)
@@ -156,8 +146,13 @@ module fabric #(
         end
         else
           recv_flits = recv_flits + 1;
-        recv_state = WAIT;
       end
+    ACCEPT:
+    begin
+      r_ready_out = 1'b0;
+      recv_state = GET_FLIT;
+    end
+    default: recv_state = GET_FLIT;
     endcase
 
   // resetting and time counting
@@ -170,7 +165,8 @@ module fabric #(
       generated_packs = 0;
       freq_cntr       = 0;
       r_ready_out     = 1'b0;
-      recv_state      = WAIT;
+      recv_state      = GET_FLIT;
+      recv_packs      = 0;
       recv_flits      = 0;
       wrong_packs     = 0;
       time_reg        = 0;
