@@ -4,6 +4,7 @@ module transceiver #(
   parameter ADDR_SIZE  = 4,
   parameter PORTS_NUM  = 4,
   parameter NODES_NUM  = 9,
+  parameter RT_PATH   = "",
   localparam BUS_SIZE  = DATA_SIZE + ADDR_SIZE + 1
 ) (
   input                                   clk,
@@ -33,7 +34,8 @@ module transceiver #(
     .NODES_NUM(NODES_NUM),
     .ADDR_SIZE(ADDR_SIZE),
     .ADDR     (ADDR),
-    .PORTS_NUM(PORTS_NUM)
+    .PORTS_NUM(PORTS_NUM),
+    .RT_PATH  (RT_PATH)
   ) rt (
     .dest_sw (dest_addr),
     .port_num(port)

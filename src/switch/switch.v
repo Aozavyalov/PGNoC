@@ -5,6 +5,7 @@ module switch #(
   parameter NODES_NUM = 9,
   parameter ADDR      = 0,
   parameter MEM_LOG2  = 5,
+  parameter RT_PATH   = "",
   localparam BUS_SIZE = DATA_SIZE + ADDR_SIZE + 1
 ) (
   input                               clk   ,
@@ -59,7 +60,8 @@ module switch #(
     .DATA_SIZE(DATA_SIZE),
     .ADDR_SIZE(ADDR_SIZE),
     .PORTS_NUM(PORTS_NUM),
-    .NODES_NUM(NODES_NUM)
+    .NODES_NUM(NODES_NUM),
+    .RT_PATH  (RT_PATH)
   ) trans (
     .clk   (clk),
     .a_rst (a_rst),
