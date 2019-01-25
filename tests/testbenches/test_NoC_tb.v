@@ -15,6 +15,7 @@ module test_NoC_tb();
   localparam max_pack_len = `MAX_PACK_LEN;
   localparam debug = `DEBUG;
   localparam rt_path = `RT_PATH;
+  localparam logs_path = `LOGS_PATH;
   localparam flit_size = data_size + addr_size + 1;
   localparam port_size = (flit_size + 2);
   localparam bus_size  = port_size*ports_num;
@@ -72,7 +73,9 @@ module test_NoC_tb();
       .PACKS_TO_GEN(packs_to_gen),
       .MAX_PACK_LEN(max_pack_len),
       .DEBUG       (debug),
-      .FREQ        (gen_freq)
+      .FREQ        (gen_freq),
+      .LOGS_PATH   (logs_path),
+      .TEST_TIME   (max_test)
     ) IP (
       .clk         (clk_r),
       .a_rst       (rst_r),
