@@ -64,24 +64,24 @@ module test_NoC_tb();
     wire [31:0] recved_packet_sum;
     // IP i
     fabric #(
-      .DATA_SIZE(data_size),
-      .ADDR_SIZE(addr_size),
-      .ADDR(i),
-      .NODES_NUM(nodes_num),
+      .DATA_SIZE   (data_size),
+      .ADDR_SIZE   (addr_size),
+      .ADDR        (i),
+      .NODES_NUM   (nodes_num),
       .PACKS_TO_GEN(packs_to_gen),
       .MAX_PACK_LEN(max_pack_len),
-      .DEBUG(debug),
-      .FREQ(gen_freq)
+      .DEBUG       (debug),
+      .FREQ        (gen_freq)
     ) IP (
-      .clk      (clk_r),
-      .a_rst    (rst_r),
-      .data_i   (ip_data_i),
-      .data_o   (ip_data_o),
-      .r_ready_in    (ip_r_ready_in ),
-      .wr_ready_in     (ip_wr_ready_in  ),
-      .wr_ready_out    (ip_wr_ready_out ),
-      .r_ready_out     (ip_r_ready_out  ),
-      .recv_packs      (recv_packs)
+      .clk         (clk_r),
+      .a_rst       (rst_r),
+      .data_i      (ip_data_i),
+      .data_o      (ip_data_o),
+      .r_ready_in  (ip_r_ready_in),
+      .wr_ready_in (ip_wr_ready_in),
+      .wr_ready_out(ip_wr_ready_out),
+      .r_ready_out (ip_r_ready_out),
+      .recv_packs  (recv_packs)
     );
     // switch i
     switch #(
@@ -92,34 +92,34 @@ module test_NoC_tb();
       .ADDR     (i),
       .MEM_LOG2 (mem_log2)
     ) SW (
-      .clk   (clk_r),
-      .a_rst (rst_r),
-      .wr_ready_in  ({ip_wr_ready_out , sw_wr_ready_in  }),
-      .r_ready_in ({ip_r_ready_out  , sw_r_ready_in }),
-      .data_i({ip_data_o, sw_data_i}),
-      .r_ready_out  ({ip_r_ready_in , sw_r_ready_out  }),
-      .wr_ready_out ({ip_wr_ready_in  , sw_wr_ready_out }),
-      .data_o({ip_data_i, sw_data_o})
+      .clk         (clk_r),
+      .a_rst       (rst_r),
+      .wr_ready_in ({ip_wr_ready_out , sw_wr_ready_in  }),
+      .r_ready_in  ({ip_r_ready_out  , sw_r_ready_in }),
+      .data_i      ({ip_data_o, sw_data_i}),
+      .r_ready_out ({ip_r_ready_in , sw_r_ready_out  }),
+      .wr_ready_out({ip_wr_ready_in  , sw_wr_ready_out }),
+      .data_o      ({ip_data_i, sw_data_o})
     );
     // switch to connector adapter
     sw_to_connector #(
       .FLIT_SIZE(flit_size),
       .PORTS_NUM(ports_num)
     ) out_adapter (
-      .r_ready_out   (sw_r_ready_out                      ),
-      .wr_ready_out  (sw_wr_ready_out                     ),
-      .sw_data(sw_data_o                    ),
-      .bus    (conn_in[i*bus_size+:bus_size])
+      .r_ready_out (sw_r_ready_out               ),
+      .wr_ready_out(sw_wr_ready_out              ),
+      .sw_data     (sw_data_o                    ),
+      .bus         (conn_in[i*bus_size+:bus_size])
     );
     // connector to switch adapter
     connector_to_sw #(
       .FLIT_SIZE(flit_size),
       .PORTS_NUM(ports_num)
     ) in_adapter (
-      .bus    (conn_out[i*bus_size+:bus_size]),
-      .wr_ready_in   (sw_wr_ready_in                       ),
-      .r_ready_in  (sw_r_ready_in                      ),
-      .sw_data(sw_data_i                     )
+      .bus        (conn_out[i*bus_size+:bus_size]),
+      .wr_ready_in(sw_wr_ready_in                ),
+      .r_ready_in (sw_r_ready_in                 ),
+      .sw_data    (sw_data_i                     )
     );
     if (i == 0)
       assign IP_to_switch[0].recved_packet_sum = IP_to_switch[0].recv_packs;
@@ -152,11 +152,11 @@ module test_NoC_tb();
   // end connections
 
   initial
-    begin
-      clk_r = 1'b0;
-      forever
-        #(halfperiod) clk_r = ~clk_r;
-    end
+  begin
+    clk_r = 1'b0;
+    forever
+      #(halfperiod) clk_r = ~clk_r;
+  end
 
   integer test_idx;
 
