@@ -23,22 +23,24 @@ module fabric #(
 );
 
   integer time_reg;
-  // generating data
-  localparam RESET = 3'h0, PACK_GEN = 3'h1, FLIT_GEN = 3'h2, FLIT_SEND = 3'h3, GEN_FINISH = 3'h4;
-
-  integer generated_packs;
-  integer pack_len;
-  integer freq_cntr;
-
-  reg [2:0] gen_state;
-  reg [ADDR_SIZE-1:0] dest_addr;
-  reg [DATA_SIZE-1:0] gen_data;
 
   // open log file
   integer log_file;
   initial
     if (!DEBUG)
       log_file = $fopen({`LOGS_PATH, "/logs"});
+  
+  //////////////////////////////////// generating data ////////////////////////////////////
+  // sm states
+  localparam PACK_GEN = 2'h0, FLIT_GEN = 2'h1, FLIT_SEND = 2'h2, GEN_FINISH = 2'h3;
+  reg [2:0] gen_state; // state reg
+
+  integer generated_packs;
+  integer pack_len;
+  integer freq_cntr;
+
+  reg [ADDR_SIZE-1:0] dest_addr;
+  reg [DATA_SIZE-1:0] gen_data;
 
   // generating data to send
   always @(posedge clk, posedge a_rst)
@@ -105,25 +107,27 @@ module fabric #(
       else
         $fdisplay(log_file, "%5d|%3h|finish generating|%5d", time_reg, ADDR, generated_packs);
     end
-    default: gen_state = RESET;
+    default: gen_state = PACK_GEN;
   endcase
+  //////////////////////////////////// end generating ////////////////////////////////////
 
-  localparam GET_FLIT = 1'h0, ACCEPT = 1'h1;
-  reg [2:0] recv_state;
-  integer recv_flits;
-  integer wrong_packs;
-  integer recv_packs;
+  //////////////////////////////////// receiving ////////////////////////////////////
+  localparam GET_FLIT = 1'h0, WAIT_NEXT = 1'h1; // sm states
+  reg [2:0] recv_state;                      // state reg
+  integer recv_flits;                        // received flits num
+  integer wrong_packs;                       // wrong packs num
+  integer recv_packs;                        // received packs num
   
-  // receiving data
   always @(posedge clk, posedge a_rst)
     case (recv_state)
     GET_FLIT:
-      if (wr_ready_in == 1'b1)
+      if (wr_ready_in == 1'b1)  // then it has flit to get
       begin
-        r_ready_out = 1'b1;
-        recv_state  = ACCEPT;
+        r_ready_out = 1'b1;     // accept getting
+        recv_state  = WAIT_NEXT;   // next state
         if (ADDR != data_i[ADDR_SIZE-1:0])  // if wrong address
         begin
+          // writing message about wrong flit
           if (DEBUG)
             $display("%5d|%3h|recved wrong flit|real addr: %3h|%b", time_reg, ADDR, data_i[ADDR_SIZE-1:0], data_i);
           else
@@ -131,6 +135,8 @@ module fabric #(
           wrong_packs = wrong_packs + 1;
         end
         else
+          // write message about getting flit
+          recv_flits = recv_flits + 1;
           if (DEBUG)
             $display("%5d|%3h|recved flit|%2d|%b", time_reg, ADDR, recv_flits, data_i);
           else
@@ -144,16 +150,16 @@ module fabric #(
           else
             $fdisplay(log_file, "%5d|%3h|recved package|packages: %2d", time_reg, ADDR, recv_packs);
         end
-        else
-          recv_flits = recv_flits + 1;
       end
-    ACCEPT:
+    WAIT_NEXT:
     begin
       r_ready_out = 1'b0;
       recv_state = GET_FLIT;
     end
     default: recv_state = GET_FLIT;
     endcase
+
+  //////////////////////////////////// end receiving ////////////////////////////////////
 
   // resetting and time counting
   always @(posedge clk, posedge a_rst)
