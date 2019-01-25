@@ -73,37 +73,3 @@ module switch #(
     .data_o(data_o)
   );
 endmodule
-
-module sw_to_connector #(
-  parameter FLIT_SIZE = 37,
-  parameter PORTS_NUM = 4,
-  localparam PORT_SIZE = (FLIT_SIZE + 2)
-)(
-  input            [PORTS_NUM-1:0] r_ready_out   ,
-  input            [PORTS_NUM-1:0] wr_ready_out  ,
-  input  [FLIT_SIZE*PORTS_NUM-1:0] sw_data,
-  output [PORT_SIZE*PORTS_NUM-1:0] bus
-);
-  genvar i;
-  generate
-    for (i = 0; i < PORTS_NUM; i = i + 1)
-      assign bus[i*PORT_SIZE+:PORT_SIZE] = {sw_data[i*FLIT_SIZE+:FLIT_SIZE], r_ready_out[i], wr_ready_out[i]};
-  endgenerate
-endmodule // sw_to_connector
-
-module connector_to_sw #(
-  parameter FLIT_SIZE = 37,
-  parameter PORTS_NUM = 4,
-  localparam PORT_SIZE = (FLIT_SIZE + 2)
-)(
-  input  [PORT_SIZE*PORTS_NUM-1:0] bus   ,
-  output           [PORTS_NUM-1:0] wr_ready_in  ,
-  output           [PORTS_NUM-1:0] r_ready_in ,
-  output [FLIT_SIZE*PORTS_NUM-1:0] sw_data
-);
-  genvar i;
-  generate
-    for (i = 0; i < PORTS_NUM; i = i + 1)
-      assign {sw_data[i*FLIT_SIZE+:FLIT_SIZE], r_ready_in[i], wr_ready_in[i]} = bus[i*PORT_SIZE+:PORT_SIZE];
-  endgenerate
-endmodule // connector_to_sw

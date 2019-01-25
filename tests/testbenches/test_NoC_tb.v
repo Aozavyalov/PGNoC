@@ -42,9 +42,9 @@ module test_NoC_tb();
   wire [nodes_num*bus_size-1:0] conn_out;
 
   // IP + switch connection
-  genvar i;
+  genvar node_idx, port_idx;
   generate
-  for (i = 0; i < nodes_num; i = i + 1)
+  for (node_idx = 0; node_idx < nodes_num; node_idx = node_idx + 1)
   begin : IP_to_switch
     // ip to switcher
     wire [flit_size-1:0] ip_data_o;
@@ -63,11 +63,11 @@ module test_NoC_tb();
     wire [31:0]                    recv_packs;
     // sum of packets for stopping testbench
     wire [31:0] recved_packet_sum;
-    // IP i
+    // IP node_idx
     fabric #(
       .DATA_SIZE   (data_size),
       .ADDR_SIZE   (addr_size),
-      .ADDR        (i),
+      .ADDR        (node_idx),
       .NODES_NUM   (nodes_num),
       .PACKS_TO_GEN(packs_to_gen),
       .MAX_PACK_LEN(max_pack_len),
@@ -84,13 +84,13 @@ module test_NoC_tb();
       .r_ready_out (ip_r_ready_out),
       .recv_packs  (recv_packs)
     );
-    // switch i
+    // switch node_idx
     switch #(
       .DATA_SIZE(data_size),
       .ADDR_SIZE(addr_size),
       .PORTS_NUM(ports_num),
       .NODES_NUM(nodes_num),
-      .ADDR     (i),
+      .ADDR     (node_idx),
       .MEM_LOG2 (mem_log2),
       .RT_PATH  (rt_path)
     ) SW (
@@ -103,30 +103,18 @@ module test_NoC_tb();
       .wr_ready_out({ip_wr_ready_in  , sw_wr_ready_out }),
       .data_o      ({ip_data_i, sw_data_o})
     );
-    // switch to connector adapter
-    sw_to_connector #(
-      .FLIT_SIZE(flit_size),
-      .PORTS_NUM(ports_num)
-    ) out_adapter (
-      .r_ready_out (sw_r_ready_out               ),
-      .wr_ready_out(sw_wr_ready_out              ),
-      .sw_data     (sw_data_o                    ),
-      .bus         (conn_in[i*bus_size+:bus_size])
-    );
-    // connector to switch adapter
-    connector_to_sw #(
-      .FLIT_SIZE(flit_size),
-      .PORTS_NUM(ports_num)
-    ) in_adapter (
-      .bus        (conn_out[i*bus_size+:bus_size]),
-      .wr_ready_in(sw_wr_ready_in                ),
-      .r_ready_in (sw_r_ready_in                 ),
-      .sw_data    (sw_data_i                     )
-    );
-    if (i == 0)
+    // connect topology module and switches
+    for (port_idx = 0; port_idx < ports_num; port_idx = port_idx + 1)
+    begin : port_connections
+      // port is data + read signal + write signal
+      assign conn_in[node_idx*bus_size+port_idx*port_size+:port_size] = {sw_data_o[port_idx*flit_size+:flit_size], sw_r_ready_out[port_idx], sw_wr_ready_out[port_idx]};
+      assign {sw_data_i[port_idx*flit_size+:flit_size], sw_r_ready_in[port_idx], sw_wr_ready_in[port_idx]} = conn_out[node_idx*bus_size+port_idx*port_size+:port_size];
+    end
+    // sum of all received packages
+    if (node_idx == 0)
       assign IP_to_switch[0].recved_packet_sum = IP_to_switch[0].recv_packs;
     else
-      assign IP_to_switch[i].recved_packet_sum = IP_to_switch[i-1].recved_packet_sum + IP_to_switch[i].recv_packs;
+      assign IP_to_switch[node_idx].recved_packet_sum = IP_to_switch[node_idx-1].recved_packet_sum + IP_to_switch[node_idx].recv_packs;
   end // IP_to_switch
   endgenerate
 
