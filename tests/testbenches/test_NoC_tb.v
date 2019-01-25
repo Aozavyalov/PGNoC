@@ -43,81 +43,89 @@ module test_NoC_tb();
   // IP + switch connection
   genvar i;
   generate
-    for (i = 0; i < nodes_num; i = i + 1)
-      begin : IP_to_switch
-        // ip to switcher
-        wire [flit_size-1:0] ip_data_o;
-        wire [flit_size-1:0] ip_data_i;
-        wire                 ip_r_ready_out  ;
-        wire                 ip_wr_ready_out ;
-        wire                 ip_wr_ready_in  ;
-        wire                 ip_r_ready_in ;
-        // switcher to adapter
-        wire [flit_size*ports_num-1:0] sw_data_i;
-        wire [flit_size*ports_num-1:0] sw_data_o;
-        wire [ports_num-1:0]           sw_r_ready_out ;
-        wire [ports_num-1:0]           sw_wr_ready_out;
-        wire [ports_num-1:0]           sw_wr_ready_in ;
-        wire [ports_num-1:0]           sw_r_ready_in;
-        // IP i
-        fabric #(
-          .DATA_SIZE(data_size),
-          .ADDR_SIZE(addr_size),
-          .ADDR(i),
-          .NODES_NUM(nodes_num),
-          .PACKS_TO_GEN(packs_to_gen),
-          .MAX_PACK_LEN(max_pack_len),
-          .DEBUG(debug),
-          .FREQ(gen_freq)
-        ) IP (
-          .clk      (clk_r),
-          .a_rst    (rst_r),
-          .data_i   (ip_data_i),
-          .data_o   (ip_data_o),
-          .r_ready_in    (ip_r_ready_in ),
-          .wr_ready_in     (ip_wr_ready_in  ),
-          .wr_ready_out    (ip_wr_ready_out ),
-          .r_ready_out     (ip_r_ready_out  )
-        );
-        // switch i
-        switch #(
-          .DATA_SIZE(data_size),
-          .ADDR_SIZE(addr_size),
-          .PORTS_NUM(ports_num),
-          .NODES_NUM(nodes_num),
-          .ADDR     (i),
-          .MEM_LOG2 (mem_log2)
-        ) SW (
-          .clk   (clk_r),
-          .a_rst (rst_r),
-          .wr_ready_in  ({ip_wr_ready_out , sw_wr_ready_in  }),
-          .r_ready_in ({ip_r_ready_out  , sw_r_ready_in }),
-          .data_i({ip_data_o, sw_data_i}),
-          .r_ready_out  ({ip_r_ready_in , sw_r_ready_out  }),
-          .wr_ready_out ({ip_wr_ready_in  , sw_wr_ready_out }),
-          .data_o({ip_data_i, sw_data_o})
-        );
-        // switch to connector adapter
-        sw_to_connector #(
-          .FLIT_SIZE(flit_size),
-          .PORTS_NUM(ports_num)
-        ) out_adapter (
-          .r_ready_out   (sw_r_ready_out                      ),
-          .wr_ready_out  (sw_wr_ready_out                     ),
-          .sw_data(sw_data_o                    ),
-          .bus    (conn_in[i*bus_size+:bus_size])
-        );
-        // connector to switch adapter
-        connector_to_sw #(
-          .FLIT_SIZE(flit_size),
-          .PORTS_NUM(ports_num)
-        ) in_adapter (
-          .bus    (conn_out[i*bus_size+:bus_size]),
-          .wr_ready_in   (sw_wr_ready_in                       ),
-          .r_ready_in  (sw_r_ready_in                      ),
-          .sw_data(sw_data_i                     )
-        );
-      end
+  for (i = 0; i < nodes_num; i = i + 1)
+  begin : IP_to_switch
+    // ip to switcher
+    wire [flit_size-1:0] ip_data_o;
+    wire [flit_size-1:0] ip_data_i;
+    wire                 ip_r_ready_out  ;
+    wire                 ip_wr_ready_out ;
+    wire                 ip_wr_ready_in  ;
+    wire                 ip_r_ready_in ;
+    // switcher to adapter
+    wire [flit_size*ports_num-1:0] sw_data_i;
+    wire [flit_size*ports_num-1:0] sw_data_o;
+    wire [ports_num-1:0]           sw_r_ready_out ;
+    wire [ports_num-1:0]           sw_wr_ready_out;
+    wire [ports_num-1:0]           sw_wr_ready_in ;
+    wire [ports_num-1:0]           sw_r_ready_in;
+    wire [31:0]                    recv_packs;
+    // sum of packets for stopping testbench
+    wire [31:0] recved_packet_sum;
+    // IP i
+    fabric #(
+      .DATA_SIZE(data_size),
+      .ADDR_SIZE(addr_size),
+      .ADDR(i),
+      .NODES_NUM(nodes_num),
+      .PACKS_TO_GEN(packs_to_gen),
+      .MAX_PACK_LEN(max_pack_len),
+      .DEBUG(debug),
+      .FREQ(gen_freq)
+    ) IP (
+      .clk      (clk_r),
+      .a_rst    (rst_r),
+      .data_i   (ip_data_i),
+      .data_o   (ip_data_o),
+      .r_ready_in    (ip_r_ready_in ),
+      .wr_ready_in     (ip_wr_ready_in  ),
+      .wr_ready_out    (ip_wr_ready_out ),
+      .r_ready_out     (ip_r_ready_out  ),
+      .recv_packs      (recv_packs)
+    );
+    // switch i
+    switch #(
+      .DATA_SIZE(data_size),
+      .ADDR_SIZE(addr_size),
+      .PORTS_NUM(ports_num),
+      .NODES_NUM(nodes_num),
+      .ADDR     (i),
+      .MEM_LOG2 (mem_log2)
+    ) SW (
+      .clk   (clk_r),
+      .a_rst (rst_r),
+      .wr_ready_in  ({ip_wr_ready_out , sw_wr_ready_in  }),
+      .r_ready_in ({ip_r_ready_out  , sw_r_ready_in }),
+      .data_i({ip_data_o, sw_data_i}),
+      .r_ready_out  ({ip_r_ready_in , sw_r_ready_out  }),
+      .wr_ready_out ({ip_wr_ready_in  , sw_wr_ready_out }),
+      .data_o({ip_data_i, sw_data_o})
+    );
+    // switch to connector adapter
+    sw_to_connector #(
+      .FLIT_SIZE(flit_size),
+      .PORTS_NUM(ports_num)
+    ) out_adapter (
+      .r_ready_out   (sw_r_ready_out                      ),
+      .wr_ready_out  (sw_wr_ready_out                     ),
+      .sw_data(sw_data_o                    ),
+      .bus    (conn_in[i*bus_size+:bus_size])
+    );
+    // connector to switch adapter
+    connector_to_sw #(
+      .FLIT_SIZE(flit_size),
+      .PORTS_NUM(ports_num)
+    ) in_adapter (
+      .bus    (conn_out[i*bus_size+:bus_size]),
+      .wr_ready_in   (sw_wr_ready_in                       ),
+      .r_ready_in  (sw_r_ready_in                      ),
+      .sw_data(sw_data_i                     )
+    );
+    if (i == 0)
+      assign IP_to_switch[0].recved_packet_sum = IP_to_switch[0].recv_packs;
+    else
+      assign IP_to_switch[i].recved_packet_sum = IP_to_switch[i-1].recved_packet_sum + IP_to_switch[i].recv_packs;
+  end // IP_to_switch
   endgenerate
 
   topology_module #(
@@ -151,29 +159,22 @@ module test_NoC_tb();
     end
 
   integer test_idx;
-  integer conn_change_timer;
-  reg [nodes_num*bus_size-1:0] prev_conn_out;
+
   initial
-    begin
-      conn_change_timer = 0;
-      test_idx = 0;
-      rst_r = 1'b1;
-      #(2*halfperiod) rst_r = 1'b0;
-    end
+  begin
+    test_idx = 0;
+    rst_r = 1'b1;
+    #(2*halfperiod) rst_r = 1'b0;
+  end
   
   always @(posedge clk_r)
+  begin
+    if (test_idx == max_test || IP_to_switch[nodes_num-1].recved_packet_sum == packs_to_gen*nodes_num)
     begin
-      if (prev_conn_out !== conn_out) begin
-        prev_conn_out = conn_out;
-        conn_change_timer = 0;
-      end else
-        conn_change_timer = conn_change_timer + 1;
-      if (test_idx == max_test || conn_change_timer == gen_freq*10)
-        begin
-          $display("Test has been finished");
-          $finish;
-        end
-      test_idx = test_idx + 1;
+      $display("Test has been finished, %d packets received", IP_to_switch[nodes_num-1].recved_packet_sum);
+      $finish;
     end
+    test_idx = test_idx + 1;
+  end
   
 endmodule // fake_NoC_tb
