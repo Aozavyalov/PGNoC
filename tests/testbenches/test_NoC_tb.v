@@ -157,7 +157,7 @@ module test_NoC_tb();
   begin
     test_idx = 0;
     rst_r = 1'b1;
-    #(2*halfperiod) rst_r = 1'b0;
+    #(halfperiod) rst_r = 1'b0;
   end
   
   always @(posedge clk_r)
