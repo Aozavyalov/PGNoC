@@ -57,6 +57,7 @@ module fabric #(
       begin
         pack_len = 1 + $urandom % MAX_PACK_LEN; // a lenght is a random value from 1 to MAX_PACK_LEN
         dest_addr = $urandom % NODES_NUM;       // a destination address is a random value from 0 to NODES_NUM-1
+        new_packet = {DATA_SIZE*MAX_PACK_LEN{1'b0}}; // fill reg for packet with zeroes
         // $urandom is only 32 bits, so need "for" generating
         for (generated_flits=0; generated_flits < DATA_SIZE*pack_len/32; generated_flits = generated_flits + 1)
           new_packet[generated_flits*32+:32] = $urandom;
@@ -65,9 +66,9 @@ module fabric #(
         begin
           gen_state = FLIT_SEND;
           if (DEBUG)
-            $display("%5d|%3h|new package|len: %2h|addr: %3h", time_int, ADDR, pack_len, dest_addr);
+            $display("%5d|%3h|new package|len: %2h|addr: %3h|%b", time_int, ADDR, pack_len, dest_addr, new_packet);
           else
-            $fdisplay(log_file, "%5d|%3h|new package|len: %2h|addr: %3h", time_int, ADDR, pack_len, dest_addr);
+            $fdisplay(log_file, "%5d|%3h|new package|len: %2h|addr: %3h|%b", time_int, ADDR, pack_len, dest_addr, new_packet);
         end
         else // need just for message while debug
           if (DEBUG)
@@ -138,6 +139,7 @@ module fabric #(
   reg [2:0] recv_state;                      // state reg
   integer recv_flits;                        // received flits num
   integer wrong_flits;                       // wrong flits num
+  reg [DATA_SIZE*MAX_PACK_LEN-1:0] recved_packet; // reg with full received packet
   
   always @(posedge clk)
     if (!a_rst)
@@ -147,6 +149,7 @@ module fabric #(
         begin
           r_ready_out = 1'b1;     // accept getting
           recv_state  = WAIT_NEXT;   // next state
+          recved_packet[recv_flits*DATA_SIZE+:DATA_SIZE] = data_i[ADDR_SIZE+1+:DATA_SIZE+1];
           if (ADDR != data_i[ADDR_SIZE-1:0])  // if wrong address
           begin
             // writing message about wrong flit
@@ -160,18 +163,19 @@ module fabric #(
           begin
             // write message about getting flit
             if (DEBUG)
-              $display("%5d|%3h|recved flit|%2d|%b", time_int, ADDR, recv_flits, data_i);
+              $display("%5d|%3h|recved flit|%2d|%b", time_int, ADDR, recv_flits, recved_packet[recv_flits*DATA_SIZE+:DATA_SIZE]);
             else
-              $fdisplay(log_file, "%5d|%3h|recved flit|%2d|%b", time_int, ADDR, recv_flits, data_i);
+              $fdisplay(log_file, "%5d|%3h|recved flit|%2d|%b", time_int, ADDR, recv_flits, recved_packet[recv_flits*DATA_SIZE+:DATA_SIZE]);
             recv_flits = recv_flits + 1;
           end
           if (data_i[ADDR_SIZE] == 1'b1) // if last flit of a package
           begin
-            if (DEBUG)
-              $display("%5d|%3h|recved package|packages: %2d", time_int, ADDR, recv_packs);
-            else
-              $fdisplay(log_file, "%5d|%3h|recved package|packages: %2d", time_int, ADDR, recv_packs);
             recv_packs = recv_packs + 1;
+            if (DEBUG)
+              $display("%5d|%3h|recved package|len: %d|packages: %2d|%b", time_int, ADDR, recv_flits, recv_packs, recved_packet);
+            else
+              $fdisplay(log_file, "%5d|%3h|recved package|len: %d|packages: %2d|%b", time_int, ADDR, recv_flits, recv_packs, recved_packet);
+            recved_packet = {DATA_SIZE*MAX_PACK_LEN{1'b0}};
             recv_flits = 0;
           end
         end
@@ -201,6 +205,7 @@ module fabric #(
       wrong_flits     = 0;
       time_int        = 0;
       fin_flag        = 0;
+      recved_packet   = {DATA_SIZE*MAX_PACK_LEN{1'b0}};
       if (DEBUG)
         $display("%5d|%3h|reset", time_int, ADDR);
       else
