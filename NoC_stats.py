@@ -9,35 +9,7 @@ def arg_parser_create():
     return args
 
 def parse_logs(path_to_logs, flit_len=38):
-  logs = list()
-  with open(f"{path_to_logs}", 'r') as logfile:
-    for line in logfile:
-      log = dict()
-      splitted = line.split('|')
-      log['time'] = int(splitted[0])
-      log['addr'] = int(splitted[1], base=16)
-      log['stat'] = splitted[2]
-      if log['stat'] == "new package":
-        log['pack_len'] = int(splitted[3].split()[1], base=16)
-        log['dest_addr'] = int(splitted[4].split()[1], base=16)
-      elif log['stat'] == "flit sended":
-        log['flit'] = splitted[3][-2::-1]  # reverse for better usability
-      elif log['stat'] == "package sended":
-        log['packs_sended'] = int(splitted[3])
-      elif log['stat'] == "finish generating":
-        log['packs_sended'] = int(splitted[3])
-      elif log['stat'] == "recved flit":
-        log['flit_num'] = int(splitted[3]) + 1
-        log['flit'] = splitted[4][-2::-1]
-      elif log['stat'] == "recved wrong flit":
-        log['real_addr'] = splitted[3].split()[1]
-        log['flit'] = splitted[4][-2::-1]
-      elif log['stat'] == "recved package":
-        log['packs_recv'] = int(splitted[3].split()[1])
-      logs.append(log)
-  return logs
-
-def make_stats(logs):
+  # all network stats
   stats = { "flits_sended": 0,
             "flits_recv"  : 0,
             "packs_sended": 0,
@@ -46,37 +18,54 @@ def make_stats(logs):
             "mean_time"   : 0,
             "nodes" : dict()
           }
+  # dict for saving flit send time and counting mean time
   flits_send_time = dict()
-  for log in sorted(logs, key=lambda log: log['time']):
-    # print(log)
-    if log['addr'] not in stats['nodes']:
-      stats['nodes'][log['addr']] = {
-        "flits_sended": 0,
-        "flits_recv"  : 0,
-        "packs_sended": 0,
-        "packs_recved": 0,
-        "wrong_flits" : 0,
-        "mean_time"   : 0,
-        "last_flit_send_time" : 0,
-        "last_flit_recv_time" : 0,
-      }
-    if log['stat'] == "flit sended":
-      stats['nodes'][log['addr']]['flits_sended'] += 1
-      flits_send_time[log['flit']] = log['time']
-      stats['nodes'][log['addr']]['last_flit_send_time'] = log['time'] - 1
-    elif log['stat'] == "recved flit":
-      stats['nodes'][log['addr']]['flits_recv'] += 1
-      stats['nodes'][log['addr']]['mean_time'] += (log['time'] - flits_send_time[log['flit']])
-      flits_send_time.pop(log['flit'])
-      stats['nodes'][log['addr']]['last_flit_recv_time'] = log['time'] - 1
-    elif log['stat'] == "recved wrong flit":
-      stats['nodes'][log['addr']]['wrong_flits'] += 1
-    elif log['stat'] == "package sended":
-      stats['nodes'][log['addr']]['packs_sended'] += 1
-    elif log['stat'] == "recved package":
-      stats['nodes'][log['addr']]['packs_recved'] += 1
+  with open(f"{path_to_logs}", 'r') as logfile:
+    for line in logfile:
+      splitted = line.split('|')  # splitting log line
+      time = int(splitted[0])
+      addr = int(splitted[1], base=16)
+      mess_type = splitted[2]
+      # adding a new node to the stats
+      if addr not in stats['nodes']:
+        stats['nodes'][addr] = {
+          "flits_sended": 0,
+          "flits_recv"  : 0,
+          "packs_sended": 0,
+          "packs_recved": 0,
+          "wrong_flits" : 0,
+          "mean_time"   : 0,
+          "last_flit_send_time" : 0,
+          "last_flit_recv_time" : 0,
+        }
+      if mess_type == "new package":
+        pack_len = int(splitted[3].split()[1], base=16)
+        dest_addr = int(splitted[4].split()[1], base=16)
+      elif mess_type == "package sended":
+        packs_sended = int(splitted[3])
+        stats['nodes'][addr]['packs_sended'] = packs_sended
+      elif mess_type == "recved package":
+        stats['nodes'][addr]['packs_recved'] += 1
+      elif mess_type == "flit sended":  # send flit case
+        flit = splitted[3][-2::-1]  # reverse for better usability
+        stats['nodes'][addr]['flits_sended'] += 1
+        flits_send_time[flit] = time
+        stats['nodes'][addr]['last_flit_send_time'] = time
+      elif mess_type == "recved flit":  # receiving flit case
+        flit = splitted[4][-2::-1]  # reverse for better usability
+        stats['nodes'][addr]['flits_recv'] += 1
+        stats['nodes'][addr]['mean_time'] += (time - flits_send_time[flit])
+        flits_send_time.pop(flit) # removing flit from dict after getting
+        stats['nodes'][addr]['last_flit_recv_time'] = time
+      elif mess_type == "recved wrong flit":
+        real_addr = splitted[3].split()[1]
+        flit = splitted[4][-2::-1]
+        stats['nodes'][addr]['wrong_flits'] += 1
+      # else:
+      #   print(f"Unknown message type: {mess_type}")
+  # counting mean time for every node after summing
   for node in stats['nodes']:
-    if stats['nodes'][node]['flits_recv']: # if some flits recved
+    if stats['nodes'][node]['flits_recv']: # if any flits recved
       stats['nodes'][node]['mean_time'] = stats['nodes'][node]['mean_time'] / stats['nodes'][node]['flits_recv']
   # all stats
   for node in stats['nodes']:
@@ -92,12 +81,11 @@ def make_stats(logs):
       elif param == 'wrong_flits':
         stats['wrong_flits'] += stats['nodes'][node][param]
       elif param == 'mean_time':
-        stats['mean_time'] += stats['nodes'][node][param]
-  # stats['model_time'] = sorted(logs, key=lambda log: log['time'])[-1]['time'] - 1 # 1 cycle for resetting
-  stats['model_time'] = max([stats['nodes'][node]['last_flit_recv_time'] for node in stats['nodes']])
-  stats['mean_time'] = stats['mean_time'] / len(stats['nodes'].keys())
+        stats['mean_time'] += stats['nodes'][node][param]  # summing all mean time 
+  stats['model_time'] = max([stats['nodes'][node]['last_flit_recv_time'] for node in stats['nodes']])  # modeling time is last time then flit recved
+  stats['mean_time'] = stats['mean_time'] / len(stats['nodes'].keys())  # real mean time calc
   stats['fir'] = stats['flits_sended'] / stats['model_time'] / len(stats['nodes'].keys())
-  return stats
+  return stats  
 
 def result_former(stats):
   res_str = str()
@@ -124,15 +112,10 @@ def result_former(stats):
 
 if __name__ == "__main__":
   args = arg_parser_create()
-  logs = parse_logs(args.logs_file)
-  if logs:
-    stats = make_stats(logs)
-    res_string = result_former(stats)
-    if args.savefile:
-      with open(args.savefile, 'w') as savefile:
-        savefile.write(res_string)
-    else:
-      print(res_string)
+  stats = parse_logs(args.logs_file)
+  res_string = result_former(stats)
+  if args.savefile:
+    with open(args.savefile, 'w') as savefile:
+      savefile.write(res_string)
   else:
-    print("There are no logs")
-  
+    print(res_string)
