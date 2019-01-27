@@ -163,9 +163,9 @@ module fabric #(
           begin
             // write message about getting flit
             if (DEBUG)
-              $display("%5d|%3h|recved flit|%2d|%b", time_int, ADDR, recv_flits, recved_packet[recv_flits*DATA_SIZE+:DATA_SIZE]);
+              $display("%5d|%3h|recved flit|%2d|%b", time_int, ADDR, recv_flits, data_i);
             else
-              $fdisplay(log_file, "%5d|%3h|recved flit|%2d|%b", time_int, ADDR, recv_flits, recved_packet[recv_flits*DATA_SIZE+:DATA_SIZE]);
+              $fdisplay(log_file, "%5d|%3h|recved flit|%2d|%b", time_int, ADDR, recv_flits, data_i);
             recv_flits = recv_flits + 1;
           end
           if (data_i[ADDR_SIZE] == 1'b1) // if last flit of a package
