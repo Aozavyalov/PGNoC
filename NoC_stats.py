@@ -17,7 +17,8 @@ def parse_logs(path_to_logs, flit_len=38):
 						"wrong_flits" : 0,
 						"wrong_packs" : 0,
 						"mean_time"	 : 0,
-						"nodes" : dict()
+						"nodes" : dict(),
+						"unknown_flits" : 0
 					}
 	# dict for saving flit send time and counting mean time
 	flits_send_time = dict()
@@ -63,10 +64,13 @@ def parse_logs(path_to_logs, flit_len=38):
 				stats['nodes'][addr]['last_flit_send_time'] = time
 			elif mess_type == "recved flit":	# receiving flit case
 				flit = splitted[4][-2::-1]	# reverse for better usability
-				stats['nodes'][addr]['flits_recv'] += 1
-				stats['nodes'][addr]['mean_time'] += (time - flits_send_time[flit])
-				flits_send_time.pop(flit) # removing flit from dict after getting
-				stats['nodes'][addr]['last_flit_recv_time'] = time
+				if flit in flits_send_time:
+					stats['nodes'][addr]['flits_recv'] += 1
+					stats['nodes'][addr]['mean_time'] += (time - flits_send_time[flit])
+					flits_send_time.pop(flit) # removing flit from dict after getting
+					stats['nodes'][addr]['last_flit_recv_time'] = time
+				else:
+					stats['unknown_flits'] += 1
 			elif mess_type == "recved wrong flit":
 				real_addr = splitted[3].split()[1]
 				flit = splitted[4][-2::-1]
@@ -103,6 +107,7 @@ def result_former(stats):
 	res_str += f"\tWrong flits received: {stats['wrong_flits']}\n"
 	res_str += f"\tWrong packets received: {stats['wrong_packs']}\n"
 	res_str += f"\tMean flit receive time: {stats['mean_time']}\n"
+	res_str += f"\tUnknown flits num: {stats['unknown_flits']}\n"
 	for node in sorted(stats['nodes']):
 		res_str += f"{node} node\n"
 		res_str += f"\tFlits sended: {stats['nodes'][node]['flits_sended']}\n"
