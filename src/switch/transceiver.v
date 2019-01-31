@@ -52,22 +52,25 @@ module transceiver #(
       state  = WAIT_PCKG;
     end
     WAIT_PCKG:
-      if (!mem_empty)  // when queue has flit to SEND_FLIT
+      if (!mem_empty)  // when queue has flit to send
       begin
         // if connected save port num, else PORTS_NUM to SEND_FLIT back
         port_r = (r_ready_in[port] !== 1'bz) ? port : PORTS_NUM;
         state = SEND_FLIT;
       end
     SEND_FLIT:
-      if (!mem_empty)  // when queue has flit to SEND_FLIT
-      begin
-        data_o[port_r*BUS_SIZE+:BUS_SIZE] = data_i;
-        wr_ready_out [port_r]             = 1'b1;
-        mem_readed                        = 1'b1;
-        state                             = ACCEPTING;
-      end
+      if (mem_empty)  // when queue has flit to send
+        wr_ready_out [port_r] = 1'b0;
+      else
+        if (r_ready_in[port_r] === 1'b0)
+        begin
+          data_o[port_r*BUS_SIZE+:BUS_SIZE] = data_i;
+          wr_ready_out [port_r]             = 1'b1;
+          mem_readed                        = 1'b1;
+          state                             = ACCEPTING;
+        end
     ACCEPTING:
-      if (r_ready_in[port_r] === 1'b1) // if mem_readed from transciever
+      if (r_ready_in[port_r] === 1'b1) // if readed from transciever
       begin
         wr_ready_out[port_r] = 1'b0;
         state = (data_o[ADDR_SIZE] == 1) ? WAIT_PCKG : SEND_FLIT;
