@@ -89,10 +89,21 @@ def parse_logs(path_to_logs, flit_len=38):
 		stats['packs_recved'] += stats['nodes'][node]['packs_recved']
 		stats['wrong_flits'] += stats['nodes'][node]['wrong_flits']
 		stats['wrong_packs'] += stats['nodes'][node]['wrong_packs']
-		stats['mean_time'] += stats['nodes'][node]['mean_time']	# summing all mean time 
-	stats['model_time'] = max([stats['nodes'][node]['last_flit_recv_time'] for node in stats['nodes']])	# modeling time is last time then flit recved
-	stats['mean_time'] = stats['mean_time'] / len(stats['nodes'].keys())	# real mean time calc
-	stats['fir'] = stats['flits_sended'] / stats['model_time'] / len(stats['nodes'].keys())
+		stats['mean_time'] += stats['nodes'][node]['mean_time']  # summing all mean time 
+	stats['model_time'] = max([stats['nodes'][node]['last_flit_recv_time'] for node in stats['nodes']])  # modeling time is last time then flit recved
+	try:
+		stats['mean_time'] = stats['mean_time'] / len(stats['nodes'].keys())  # real mean time calc
+	except ZeroDivisionError:  # return None and print values
+		print(f"Zero division error:\nFlits sended: {stats['nodes'].keys()}")
+		return None
+	try:
+		stats['fir'] = stats['flits_sended'] / stats['model_time'] / len(stats['nodes'].keys())
+	except ZeroDivisionError:  # return None and print values
+		print(f"Zero division error:")
+		print(f"Flits sended: {stats['flits_sended']}")
+		print(f"Model time: {stats['model_time']}")
+		print(f"Nodes: {stats['nodes'].keys()}")
+		return None
 	return stats	
 
 def result_former(stats):
@@ -124,9 +135,10 @@ def result_former(stats):
 if __name__ == "__main__":
 	args = arg_parser_create()
 	stats = parse_logs(args.logs_file)
-	res_string = result_former(stats)
-	if args.savefile:
-		with open(args.savefile, 'w') as savefile:
-			savefile.write(res_string)
-	else:
-		print(res_string)
+	if stats:
+		res_string = result_former(stats)
+		if args.savefile:
+			with open(args.savefile, 'w') as savefile:
+				savefile.write(res_string)
+		else:
+			print(res_string)
