@@ -26,19 +26,29 @@ module switch #(
   wire [BUS_SIZE-1:0] to_mem;
   wire [BUS_SIZE-1:0] from_mem;
 
-  receiver #(
-    .DATA_SIZE(DATA_SIZE),
-    .ADDR_SIZE(ADDR_SIZE),
-    .PORTS_NUM(PORTS_NUM)
-  ) recv (
-    .clk    (clk),
-    .a_rst  (a_rst),
-    .is_full(is_full),
-    .wr_ready_in   (wr_ready_in),
-    .data_i (data_i),
-    .wr_req (wr_req),
-    .r_ready_out   (r_ready_out),
-    .data_o (to_mem)
+  wire [31:0] in_port, out_port;
+
+  arbiter #(
+    .PORTS_NUM(PORTS_NUM),
+    .NODES_NUM(NODES_NUM),
+    .ADDR(ADDR),
+    .RT_PATH(RT_PATH)
+  ) control (
+    .clk(clk),
+    .a_rst(a_rst),
+    // switch inputs
+    .wr_ready_in(wr_ready_in),
+    .r_ready_in(r_ready_in),
+    // switch outputs
+    .r_ready_out(r_ready_out),
+    .wr_ready_out(wr_ready_out),
+    // memory signals
+    .mem_is_full(is_full),
+    .mem_is_empty(is_empty),
+    .wr_req(wr_req),
+    // control signals
+    .in_port(in_port),
+    .out_port(out_port)
   );
 
   queue #(
@@ -55,21 +65,19 @@ module switch #(
     .data_o(from_mem)
   );
 
-  transceiver #(
-    .ADDR     (ADDR),
-    .DATA_SIZE(DATA_SIZE),
-    .ADDR_SIZE(ADDR_SIZE),
-    .PORTS_NUM(PORTS_NUM),
-    .NODES_NUM(NODES_NUM),
-    .RT_PATH  (RT_PATH)
-  ) trans (
-    .clk   (clk),
-    .a_rst (a_rst),
-    .mem_empty(is_empty),
-    .r_ready_in (r_ready_in),
-    .data_i(from_mem),
-    .mem_readed(mem_readed),
-    .wr_ready_out (wr_ready_out),
-    .data_o(data_o)
-  );
+  integer i, j;
+  always @(*)
+  begin : input_select
+    for (i = 0; i < PORTS_NUM + 1; i = i + 1)
+      if (i == in_port)
+        to_mem = data_i[i*BUS_SIZE+:BUS_SIZE];
+  end // input_select
+
+  always @(*)
+  begin : output_select
+    for (j = 0; j < PORTS_NUM + 1; j = j + 1)
+      if (j == out_port)
+        data_o[j*BUS_SIZE+:BUS_SIZE] = from_mem;
+  end // output_select
+
 endmodule
