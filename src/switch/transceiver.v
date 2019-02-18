@@ -59,16 +59,16 @@ module transceiver #(
         state = SEND_FLIT;
       end
     SEND_FLIT:
-      if (mem_empty)  // when queue has flit to send
-        wr_ready_out [port_r] = 1'b0;
-      else
-        if (r_ready_in[port_r] === 1'b0)
-        begin
-          data_o[port_r*BUS_SIZE+:BUS_SIZE] = data_i;
-          wr_ready_out [port_r]             = 1'b1;
-          mem_readed                        = 1'b1;
-          state                             = ACCEPTING;
-        end
+    begin
+      wr_ready_out [port_r] = 1'b0;
+      if (!mem_empty & r_ready_in[port_r] === 1'b0)  // when queue has flit to send
+      begin
+        data_o[port_r*BUS_SIZE+:BUS_SIZE] = data_i;
+        wr_ready_out [port_r]             = 1'b1;
+        mem_readed                        = 1'b1;
+        state                             = ACCEPTING;
+      end
+    end
     ACCEPTING:
       if (r_ready_in[port_r] === 1'b1) // if readed from transciever
       begin

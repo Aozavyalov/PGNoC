@@ -85,7 +85,7 @@ def arg_parser_create():
     parser = argparse.ArgumentParser(description="Script for generating routing tables for NoC.")
     parser.add_argument('top_types', type=str, nargs='+', choices=['mesh', 'circ2', 'torus'], help="Types of topologies to generate.")
     parser.add_argument('nodes', type=int, default=9, help="Number of nodes in a NoC")
-    parser.add_argument('-n', '--name', type=str, default=str(), help="Name of file, there a routing table will be wrote. Default: {top_type}_{params}.hex.")
+    parser.add_argument('-n', '--name', type=str, default=str(), help="Name of file, there a routing table will be wrote. Default: {top_type}_{params}.srtf.")
     parser.add_argument('-i', '--invert', type=bool, default=True, help="Parameter to invert or not a routing table. Default True.")
     parser.add_argument('-t', '--transpose', type=bool, default=False, help="Parameter to transpose a routing table or not. Default False.")
     parser.add_argument('-h_size', type=int, default=3, help="H_SIZE for mesh.")
@@ -113,18 +113,18 @@ if __name__ == "__main__":
     for top_type in top_types:
         if top_type == "mesh":
             if not args.name:
-                filename = f"{args.path}/mesh_{args.nodes}_{args.h_size}.hex"
+                filename = f"{args.path}/mesh_{args.nodes}_{args.h_size}.srtf"
             else:
-                filename = f"{args.path}/{args.name}.hex"
+                filename = f"{args.path}/{args.name}.srtf"
             rout_table = mesh_rt_gen(
                             args.nodes,
                             args.h_size
                         )
         elif top_type == "circ2":
             if not args.name:
-                filename = f"{args.path}/circ2_{args.nodes}_{args.s1}_{args.s2}.hex"
+                filename = f"{args.path}/circ2_{args.nodes}_{args.s1}_{args.s2}.srtf"
             else:
-                filename = f"{args.path}/{args.name}.hex"
+                filename = f"{args.path}/{args.name}.srtf"
             rout_table = circ2_rt_gen(
                             args.nodes,
                             args.s1,
@@ -132,9 +132,9 @@ if __name__ == "__main__":
                         )
         elif top_type == "torus":
             if not args.name:
-                filename = f"{args.path}/torus_{args.nodes}_{args.h_size}.hex"
+                filename = f"{args.path}/torus_{args.nodes}_{args.h_size}.srtf"
             else:
-                filename = f"{args.path}/{args.name}.hex"
+                filename = f"{args.path}/{args.name}.srtf"
             rout_table = torus_rt_gen(
                             args.nodes,
                             args.h_size

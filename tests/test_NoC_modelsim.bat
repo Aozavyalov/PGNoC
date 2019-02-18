@@ -46,5 +46,5 @@ vsim -do ../tcls/test_NoC.tcl
 rem remove sim folder after finishing
 cd ..
 rd /s /q sim
-del %type%_rt.hex
+del %type%_rt.srtf
 exit /B
