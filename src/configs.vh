@@ -9,9 +9,9 @@
 
 // specific params
 
-// `define MESH_2D  // enabling mesh in topology_module
+`define MESH_2D  // enabling mesh in topology_module
 // `define CIRCULANT_2
-`define TORUS
+// `define TORUS
 
 `ifdef MESH_2D
 `define RT_PATH "../mesh_rt.srtf"
@@ -31,9 +31,10 @@
 
 // testing params for fabric module
 `define DEBUG        0
-`define MAX_PACK_LEN 4
+`define MAX_PACK_LEN 10
 `define PACKS_TO_GEN 11000
-`define TEST_TIME    5_000_000
+`define TEST_TIME    10_000_000
 `define HALFPERIOD   1
-`define GEN_FREQ     55
+`define FLIT_DELAY   1
+`define PACK_DELAY   300
 `define LOGS_PATH    ".."
