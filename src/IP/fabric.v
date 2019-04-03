@@ -72,9 +72,9 @@ module fabric #(
           begin
             gen_state = FLIT_SEND;
             if (DEBUG)
-              $display("%5d|%3h|new package|len: %2h|addr: %3h|%b", time_int, ADDR, pack_len, dest_addr, new_packet);
+              $display("%5d|%3h|new package|len: %2d|addr: %3h|%b", time_int, ADDR, pack_len, dest_addr, new_packet);
             else
-              $fdisplay(log_file, "%5d|%3h|new package|len: %2h|addr: %3h|%b", time_int, ADDR, pack_len, dest_addr, new_packet);
+              $fdisplay(log_file, "%5d|%3h|new package|len: %2d|addr: %3h|%b", time_int, ADDR, pack_len, dest_addr, new_packet);
           end
           else // need just for message while debug
             if (DEBUG)
@@ -179,9 +179,9 @@ module fabric #(
           begin
             recv_packs = recv_packs + 1;
             if (DEBUG)
-              $display("%5d|%3h|recved package|len: %d|packages: %2d|%b", time_int, ADDR, recv_flits, recv_packs, recved_packet);
+              $display("%5d|%3h|recved package|len: %2d|packages: %2d|%b", time_int, ADDR, recv_flits, recv_packs, recved_packet);
             else
-              $fdisplay(log_file, "%5d|%3h|recved package|len: %d|packages: %2d|%b", time_int, ADDR, recv_flits, recv_packs, recved_packet);
+              $fdisplay(log_file, "%5d|%3h|recved package|len: %2d|packages: %2d|%b", time_int, ADDR, recv_flits, recv_packs, recved_packet);
             recved_packet = {DATA_SIZE*MAX_PACK_LEN{1'b0}};
             recv_flits = 0;
           end

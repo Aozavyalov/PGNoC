@@ -45,13 +45,13 @@ def parse_logs(path_to_logs, flit_len=38):
 			if addr not in generated_packs:
 				generated_packs[addr] = set()
 			if mess_type == "new package":
-				pack_len = int(splitted[3].split()[1], base=16)
+				pack_len = int(splitted[3].split()[1], base=10)
 				dest_addr = int(splitted[4].split()[1], base=16)
 				generated_packs[dest_addr].add((splitted[5], pack_len))
 			elif mess_type == "package sended":
 				stats['nodes'][addr]['packs_sended'] += 1
 			elif mess_type == "recved package":
-				pack_len = int(splitted[3].split()[1], base=16)
+				pack_len = int(splitted[3].split()[1], base=10)
 				stats['nodes'][addr]['packs_recved'] += 1
 				if (splitted[5], pack_len) in generated_packs[addr]:
 					generated_packs[addr].remove((splitted[5], pack_len))
