@@ -37,6 +37,21 @@ module test_NoC_tb();
   reg clk_r;
   reg rst_r;
 
+  // creating a header in log
+  integer log_file; // log file descriptor
+  initial
+    if (!debug)
+    begin
+      log_file = $fopen({logs_path, "/logs"});
+      `ifdef MESH_2D
+      $fdisplay(log_file, "Mesh, nodes %d, h_size %d, ports %d, flit_size %d, addr_size %d", nodes_num, h_size, ports_num, flit_size, addr_size);
+      `elsif CIRCULANT_2
+      $fdisplay(log_file, "Circulant2, nodes %d, s0 %d, s1 %d, ports %d, flit_size %d, addr_size %d", nodes_num, s0, s1, ports_num, flit_size, addr_size);
+      `elsif TORUS
+      $fdisplay(log_file, "Torus, nodes %d, h_size %d, ports %d, flit_size %d, addr_size %d", nodes_num, h_size, ports_num, flit_size, addr_size);
+      `endif
+    end
+
   // connections and modules
 
   // connector buses
@@ -166,6 +181,7 @@ module test_NoC_tb();
   begin
     if (test_idx == max_test || IP_to_switch[nodes_num-1].recved_packet_sum == packs_to_gen*nodes_num)
     begin
+      $fclose(log_file);
       $display("Test has been finished, %d packets received", IP_to_switch[nodes_num-1].recved_packet_sum);
       $finish;
     end
