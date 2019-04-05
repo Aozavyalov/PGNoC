@@ -10,7 +10,9 @@ def arg_parser_create():
 
 def parse_logs(path_to_logs, flit_len=38):
 	# all network stats
-	stats = { "flits_sended": 0,
+	stats = { "type" : str(),
+            "params" : dict(),
+            "flits_sended": 0,
 						"flits_recv"	: 0,
 						"packs_sended": 0,
 						"packs_recved": 0,
@@ -24,6 +26,11 @@ def parse_logs(path_to_logs, flit_len=38):
 	flits_send_time = dict()
 	generated_packs = dict() # generated packets. keys are dest nodes nums, vals are sets with packs
 	with open(f"{path_to_logs}", 'r') as logfile:
+    header = logfile.readline().split(', ')
+    stats['type'] = header[0]
+    for param_str in header[1:]:
+      param = param.split()
+      stats['params'][param[0]] = param[1]
 		for line in logfile:
 			splitted = line.split('|')	# splitting log line
 			time = int(splitted[0])
@@ -104,10 +111,12 @@ def parse_logs(path_to_logs, flit_len=38):
 		print(f"Model time: {stats['model_time']}")
 		print(f"Nodes: {stats['nodes'].keys()}")
 		return None
-	return stats	
+	return stats
 
 def result_former(stats):
 	res_str = str()
+  res_str += f"Topology type: {stats['type']}\n"
+  res_str += f"Parameters: {stats['params']}\n"
 	res_str += "All stats:\n"
 	res_str += f"\tModeling time: {stats['model_time']}\n"
 	res_str += f"\tFlits injection rate: {stats['fir']}\n"
