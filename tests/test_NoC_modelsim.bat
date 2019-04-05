@@ -42,7 +42,7 @@ cd sim
 rem generate routing table
 python ../../rout_table_gen.py -p ../ -n %type%_rt %type% %num% -h_size %h_size% -s1 %s1% -s2 %s2%
 rem start the simulation
-vsim -do ../tcls/test_NoC.tcl
+vsim -onfinish exit -do ../tcls/test_NoC.tcl
 rem remove sim folder after finishing
 cd ..
 rd /s /q sim
