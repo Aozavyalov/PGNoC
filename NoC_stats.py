@@ -177,8 +177,8 @@ if __name__ == "__main__":
 		print(res_string)
 		res_file_name = time.strftime("%Y-%m-%d-%H.%M.%S", time.localtime())
 		if stats['type'] == 'Mesh' or stats['type'] == 'Torus':
-			res_file_name += f"-{stats['type']}-{stats['params']['nodes']}-{stats['params']['h_size']}"
+			res_file_name += f"-{stats['type']}-{stats['params']['nodes']}-{stats['params']['h_size']}.stat"
 		elif stats['type'] == 'Circulant2':
-			res_file_name += f"-{stats['type']}-{stats['params']['nodes']}-{stats['params']['s0']}-{stats['params']['s1']}"
+			res_file_name += f"-{stats['type']}-{stats['params']['nodes']}-{stats['params']['s0']}-{stats['params']['s1']}.stat"
 		with open(res_file_name, 'w') as savefile:
 			savefile.write(res_string)
