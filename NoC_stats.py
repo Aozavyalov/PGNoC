@@ -1,18 +1,22 @@
+from os import system
 import argparse
+import time
 
 def arg_parser_create():
 		parser = argparse.ArgumentParser(description="Script for getting statistics of NoC work from generated files.")
 		parser.add_argument('logs_file', type=str, help="Path to a logfile.")
 		parser.add_argument('-f', '--flit_len', default=38, type=int, help="Length of flit.")
-		parser.add_argument('-s', '--savefile', type=str, nargs='?', help="File to save statistics. If not specified, it will print to console.")
 		args = parser.parse_args()
 		return args
 
 def parse_logs(path_to_logs, flit_len=38):
 	# all network stats
 	stats = { "type" : str(),
-            "params" : dict(),
-            "flits_sended": 0,
+						"params" : dict(),
+						"complete_status" : 0,  # 1 means test has been finished completely,
+																		# 2 - unsuccesfull finishing
+																		# 0 - unidenfied message
+						"flits_sended": 0,
 						"flits_recv"	: 0,
 						"packs_sended": 0,
 						"packs_recved": 0,
@@ -22,16 +26,20 @@ def parse_logs(path_to_logs, flit_len=38):
 						"nodes" : dict(),
 						"unknown_flits" : 0
 					}
+	status_str = str()
 	# dict for saving flit send time and counting mean time
 	flits_send_time = dict()
 	generated_packs = dict() # generated packets. keys are dest nodes nums, vals are sets with packs
 	with open(f"{path_to_logs}", 'r') as logfile:
-    header = logfile.readline().split(', ')
-    stats['type'] = header[0]
-    for param_str in header[1:]:
-      param = param.split()
-      stats['params'][param[0]] = param[1]
+		header = logfile.readline().split(', ')
+		stats['type'] = header[0]
+		for param_str in header[1:]:
+			param = param_str.split()
+			stats['params'][param[0]] = param[1]
 		for line in logfile:
+			if 'Test' in line:
+				status_str = line  # saving last string
+				break
 			splitted = line.split('|')	# splitting log line
 			time = int(splitted[0])
 			addr = int(splitted[1], base=16)
@@ -84,6 +92,11 @@ def parse_logs(path_to_logs, flit_len=38):
 				stats['nodes'][addr]['wrong_flits'] += 1
 			# else:
 			#	 print(f"Unknown message type: {mess_type}")
+	# getting finish status 
+	if "completed" in status_str:
+		stats['complete_status'] = 1
+	elif "untimely" in status_str:
+		stats['complete_status'] = 2
 	# counting mean time for every node after summing
 	for node in stats['nodes']:
 		if stats['nodes'][node]['flits_recv']: # if any flits recved
@@ -106,8 +119,16 @@ def parse_logs(path_to_logs, flit_len=38):
 	try:
 		stats['fir'] = stats['flits_sended'] / stats['model_time'] / len(stats['nodes'].keys())
 	except ZeroDivisionError:  # return None and print values
-		print(f"Zero division error:")
+		print(f"Zero division error in fir:")
 		print(f"Flits sended: {stats['flits_sended']}")
+		print(f"Model time: {stats['model_time']}")
+		print(f"Nodes: {stats['nodes'].keys()}")
+		return None
+	try:
+		stats['pir'] = stats['packs_sended'] / stats['model_time'] / len(stats['nodes'].keys())
+	except ZeroDivisionError:  # return None and print values
+		print(f"Zero division error in pir:")
+		print(f"Packets sended: {stats['packs_sended']}")
 		print(f"Model time: {stats['model_time']}")
 		print(f"Nodes: {stats['nodes'].keys()}")
 		return None
@@ -115,11 +136,18 @@ def parse_logs(path_to_logs, flit_len=38):
 
 def result_former(stats):
 	res_str = str()
-  res_str += f"Topology type: {stats['type']}\n"
-  res_str += f"Parameters: {stats['params']}\n"
+	res_str += f"Topology type: {stats['type']}\n"
+	res_str += f"Parameters: {stats['params']}\n"
+	if stats['complete_status'] == 0:
+		res_str += "Unknown status of finishing\n"
+	elif stats['complete_status'] == 1:
+		res_str += "Test has been finished completely\n"
+	elif stats['complete_status'] == 2:
+		res_str += "Test has been finished untimely\n"
 	res_str += "All stats:\n"
 	res_str += f"\tModeling time: {stats['model_time']}\n"
 	res_str += f"\tFlits injection rate: {stats['fir']}\n"
+	res_str += f"\tPackets injection rate: {stats['pir']}\n"
 	res_str += f"\tFlits sended: {stats['flits_sended']}\n"
 	res_str += f"\tFlits received: {stats['flits_recv']}\n"
 	res_str += f"\tPackets sended: {stats['packs_sended']}\n"
@@ -146,8 +174,11 @@ if __name__ == "__main__":
 	stats = parse_logs(args.logs_file)
 	if stats:
 		res_string = result_former(stats)
-		if args.savefile:
-			with open(args.savefile, 'w') as savefile:
-				savefile.write(res_string)
-		else:
-			print(res_string)
+		print(res_string)
+		res_file_name = time.strftime("%Y-%m-%d-%H.%M.%S", time.localtime())
+		if stats['type'] == 'Mesh' or stats['type'] == 'Torus':
+			res_file_name += f"-{stats['type']}-{stats['params']['nodes']}-{stats['params']['h_size']}"
+		elif stats['type'] == 'Circulant2':
+			res_file_name += f"-{stats['type']}-{stats['params']['nodes']}-{stats['params']['s0']}-{stats['params']['s1']}"
+		with open(res_file_name, 'w') as savefile:
+			savefile.write(res_string)
