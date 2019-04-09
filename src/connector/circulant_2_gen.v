@@ -1,5 +1,4 @@
-`define ADD_MOD(a,b,len) (((a)+(b)<(len))?((a)+(b)):((a)+(b)-(len)))
-`define SUB_MOD(a,b,len) (((a)<(b))?((len)-(b)+(a)):((a)-(b)))
+`include "../../src/connector/add_ops.vh"
 
 module circulant_2 #(
   parameter S0 = 1,
