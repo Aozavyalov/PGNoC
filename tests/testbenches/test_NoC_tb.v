@@ -57,6 +57,7 @@ module test_NoC_tb();
   // connector buses
   wire [nodes_num*bus_size-1:0] conn_in;
   wire [nodes_num*bus_size-1:0] conn_out;
+  reg [nodes_num*bus_size-1:0] conn_out_reg;
 
   // IP + switch connection
   genvar node_idx, port_idx;
@@ -169,9 +170,10 @@ module test_NoC_tb();
   end
 
   integer test_idx;
-
+  integer repeat_num;
   initial
   begin
+    repeat_num = 0;
     test_idx = 0;
     rst_r = 1'b1;
     #(halfperiod) rst_r = 1'b0;
@@ -179,10 +181,33 @@ module test_NoC_tb();
   
   always @(posedge clk_r)
   begin
+    if (conn_out_reg !== conn_out)
+    begin
+      conn_out_reg = conn_out;
+      repeat_num = 0;
+    end
+    else
+      repeat_num = repeat_num + 1;
+    if (repeat_num == 10_000)
+    begin
+      if (debug)
+        $display("Test has been finished untimely, %d packets received", IP_to_switch[nodes_num-1].recved_packet_sum);
+      else
+      begin
+        $fdisplay(log_file, "Test has been finished untimely, %d packets received", IP_to_switch[nodes_num-1].recved_packet_sum);
+        $fclose(log_file);
+      end
+      $finish;
+    end
     if (test_idx == max_test || IP_to_switch[nodes_num-1].recved_packet_sum == packs_to_gen*nodes_num)
     begin
-      $fclose(log_file);
-      $display("Test has been finished, %d packets received", IP_to_switch[nodes_num-1].recved_packet_sum);
+      if (debug)
+        $display("Test has been completed, %d packets received", IP_to_switch[nodes_num-1].recved_packet_sum);
+      else
+      begin
+        $fdisplay(log_file, "Test has been completed, %d packets received", IP_to_switch[nodes_num-1].recved_packet_sum);
+        $fclose(log_file);
+      end
       $finish;
     end
     test_idx = test_idx + 1;
