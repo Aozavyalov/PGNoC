@@ -23,16 +23,12 @@ module test_NoC_tb();
 
   `ifdef MESH_2D
   parameter h_size     = `H_SIZE;
-  `else
-  `ifdef CIRCULANT_2
+  `elsif CIRCULANT_2
   parameter s0         = `S0;
   parameter s1         = `S1;
-  `else
-  `ifdef TORUS
+  `elsif TORUS
   parameter h_size     = `H_SIZE;
-  `endif // TORUS
-  `endif // CIRCULANT_2
-  `endif // MESH_2D
+  `endif
 
   reg clk_r;
   reg rst_r;
@@ -145,16 +141,12 @@ module test_NoC_tb();
       .PORTS_NUM(ports_num),
   `ifdef MESH_2D
       .H_SIZE(h_size)
-  `else
-  `ifdef CIRCULANT_2
+  `elsif CIRCULANT_2
       .S0(s0),
       .S1(s1)
-  `else
-  `ifdef TORUS
+  `elsif TORUS
       .H_SIZE(h_size)
-  `endif // TORUS
-  `endif // CIRCULANT_2
-  `endif // MESH_2D
+  `endif 
     ) top_mod (
       .data_i (conn_in),
       .data_o (conn_out)
