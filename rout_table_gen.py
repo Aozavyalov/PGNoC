@@ -1,10 +1,10 @@
 import argparse
 
 def add_mod(a, b, n):
-    return a + b if a + b < n else a + b - n
+    return (a + b) % n
 
 def sub_mod(a, b, n):
-    return n - b + a if a < b else a - b
+    return (a - b) % n
 
 def mesh_rt_gen(nodes_num, h_size):
     rout_table = list()
