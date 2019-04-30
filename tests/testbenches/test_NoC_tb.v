@@ -1,5 +1,9 @@
 `timescale 1ns / 100ps
+
+`ifndef configs
+`define configs
 `include "../../src/configs.vh"
+`endif
 
 module test_NoC_tb();
   
