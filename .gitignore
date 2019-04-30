@@ -9,3 +9,4 @@
 */sim
 *.srtf
 *.stat
+__pycache__
