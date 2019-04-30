@@ -42,7 +42,7 @@ module test_NoC_tb();
   initial
     if (!debug)
     begin
-      log_file = $fopen({logs_path, "/logs"});
+      log_file = $fopen(logs_path);
       `ifdef MESH_2D
       $fdisplay(log_file, "Mesh, nodes %d, h_size %d, ports %d, flit_size %d, addr_size %d", nodes_num, h_size, ports_num, flit_size, addr_size);
       `elsif CIRCULANT_2
