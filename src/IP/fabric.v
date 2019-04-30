@@ -10,7 +10,7 @@ module fabric #(
   parameter  DEBUG        = 1'b0, // if debug, messages will be sent to a tcl-console, overwise to a file
   parameter  FLIT_DELAY   = 25,   // frequence of flits sending. It will be sent 1 flit in FLIT_DELAY cycles
   parameter  PACK_DELAY   = 25,   // frequence of flits sending. It will be sent 1 flit in FLIT_DELAY cycles
-  parameter  LOGS_PATH    = "..", // a path to a new log file
+  parameter  LOGS_PATH    = "../logs", // a path to a new log file
   parameter  TEST_TIME    = 0,    // then timer will set this value, log file will be closed
   localparam BUS_SIZE = DATA_SIZE + ADDR_SIZE + 1 // a full size of data bus
 ) (
@@ -34,7 +34,7 @@ module fabric #(
   integer log_file; // log file descriptor
   initial
     if (!DEBUG)
-      log_file = $fopen({LOGS_PATH, "/logs"});
+      log_file = $fopen(LOGS_PATH);
   
   //////////////////////////////////// generating data ////////////////////////////////////
   // sm states
@@ -84,8 +84,10 @@ module fabric #(
         end
       end
       FLIT_SEND: // state for flit sending
-        if (r_ready_in == 1'b0) // just to be sure that prev sending is ended
-          if (delay_cntr == FLIT_DELAY - 1) // waiting for timer
+        if (delay_cntr < FLIT_DELAY) // waiting for timer
+          delay_cntr = delay_cntr + 1; // increase freq counter
+        else
+          if (r_ready_in == 1'b0) // just to be sure that prev sending is ended
           begin
             delay_cntr = 0;       // reset timer
             wr_ready_out = 1'b1; // ready to write
@@ -99,8 +101,6 @@ module fabric #(
               $fdisplay(log_file, "%5d|%3h|new flit|%b", time_int, ADDR, data_o);
             gen_state = SEND_ACCEPTING;
           end
-          else
-            delay_cntr = delay_cntr + 1; // increase freq counter
       SEND_ACCEPTING: // state for accepting of send
         if (r_ready_in == 1'b1) // then flit is readed
         begin
