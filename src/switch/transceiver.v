@@ -4,23 +4,24 @@ module transceiver #(
   parameter ADDR_SIZE  = 4,
   parameter PORTS_NUM  = 4,
   parameter NODES_NUM  = 9,
+  parameter RT_PATH   = "",
   localparam BUS_SIZE  = DATA_SIZE + ADDR_SIZE + 1
 ) (
   input                                   clk,
   input                                   a_rst,
   input                                   mem_empty,
-  input      [PORTS_NUM:0]                out_w,
+  input      [PORTS_NUM:0]                r_ready_in,
   input      [BUS_SIZE-1:0]               data_i,
 
-  output reg                              readed,
-  output reg [PORTS_NUM:0]                out_r,
+  output reg                              mem_readed,
+  output reg [PORTS_NUM:0]                wr_ready_out,
   output reg [BUS_SIZE*(PORTS_NUM+1)-1:0] data_o
 );
 
   localparam RESET = 2'h0, 
-             WAIT  = 2'h1,
-             SEND  = 2'h2,
-             END   = 2'h3; 
+             WAIT_PCKG  = 2'h1,
+             SEND_FLIT  = 2'h2,
+             ACCEPTING  = 2'h3; 
   reg [1:0] state;
 
   wire [ADDR_SIZE-1:0] dest_addr;
@@ -33,47 +34,48 @@ module transceiver #(
     .NODES_NUM(NODES_NUM),
     .ADDR_SIZE(ADDR_SIZE),
     .ADDR     (ADDR),
-    .PORTS_NUM(PORTS_NUM)
+    .PORTS_NUM(PORTS_NUM),
+    .RT_PATH  (RT_PATH)
   ) rt (
     .dest_sw (dest_addr),
     .port_num(port)
   );
 
-  always @(posedge clk, posedge a_rst)
+  always @(posedge clk, posedge a_rst) begin
+    mem_readed = 1'b0;
+    if (a_rst) state = RESET;
+    case (state)
+    RESET:
     begin
-      readed = 1'b0;
-      if (a_rst)
-        state = RESET;
-      case (state)
-        RESET:
-          begin
-            out_r  = {PORTS_NUM+1{1'b0}};
-            port_r <= PORTS_NUM; // default will send to itself
-            state  <= WAIT;
-          end
-        WAIT:
-          if (!mem_empty)  // when queue has flit to send
-            begin
-              if (out_w[port] !== 1'bz) // if connected
-                port_r <= port;         // save port num
-              state <= SEND;
-            end
-        SEND:
-          begin
-            data_o[port_r*BUS_SIZE+:BUS_SIZE] <= data_i;
-            out_r [port_r]                    <= 1'b1;
-            readed                            <= 1'b1;
-            state                             <= END;
-          end
-        END:
-          if (out_w[port_r] === 1'b1) // if readed from transciever
-            begin
-              out_r[port_r] <= 1'b0;
-              port_r <= PORTS_NUM;
-              state  <= WAIT;         // waiting another flit
-            end
-        default:
-          state <= RESET;
-      endcase
+      wr_ready_out  = {PORTS_NUM+1{1'b0}};
+      port_r = PORTS_NUM; // default will SEND_FLIT to itself
+      state  = WAIT_PCKG;
     end
+    WAIT_PCKG:
+      if (!mem_empty)  // when queue has flit to send
+      begin
+        // if connected save port num, else PORTS_NUM to SEND_FLIT back
+        port_r = (r_ready_in[port] !== 1'bz) ? port : PORTS_NUM;
+        state = SEND_FLIT;
+      end
+    SEND_FLIT:
+    begin
+      wr_ready_out [port_r] = 1'b0;
+      if (!mem_empty & r_ready_in[port_r] === 1'b0)  // when queue has flit to send
+      begin
+        data_o[port_r*BUS_SIZE+:BUS_SIZE] = data_i;
+        wr_ready_out [port_r]             = 1'b1;
+        mem_readed                        = 1'b1;
+        state                             = ACCEPTING;
+      end
+    end
+    ACCEPTING:
+      if (r_ready_in[port_r] === 1'b1) // if readed from transciever
+      begin
+        wr_ready_out[port_r] = 1'b0;
+        state = (data_o[ADDR_SIZE] == 1) ? WAIT_PCKG : SEND_FLIT;
+      end
+    default: state = RESET;
+    endcase
+  end
 endmodule

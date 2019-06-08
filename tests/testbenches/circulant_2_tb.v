@@ -23,16 +23,16 @@ module circulant_2_tb();
 
   // input regs
   reg     [9*ports_num*bus_size-1:0] test_data_i;           
-  reg     [9*ports_num-1:0]          test_in_w;
-  reg     [9*ports_num-1:0]          test_out_r;
+  reg     [9*ports_num-1:0]          test_r_ready_out;
+  reg     [9*ports_num-1:0]          test_wr_ready_out;
   // output wires
   wire    [9*ports_num*bus_size-1:0] test_data_o [3:0];
-  wire    [9*ports_num-1:0]          test_out_w  [3:0];
-  wire    [9*ports_num-1:0]          test_in_r   [3:0];
+  wire    [9*ports_num-1:0]          test_r_ready_in  [3:0];
+  wire    [9*ports_num-1:0]          test_wr_ready_in   [3:0];
   // expected outputs 
   wire    [9*ports_num*bus_size-1:0] exp_data_o;           
-  wire    [9*ports_num-1:0]          exp_out_w;
-  wire    [9*ports_num-1:0]          exp_in_r;
+  wire    [9*ports_num-1:0]          exp_r_ready_in;
+  wire    [9*ports_num-1:0]          exp_wr_ready_in;
 
   topology_module #(
     .BUS_SIZE     ( bus_size ), 
@@ -41,12 +41,12 @@ module circulant_2_tb();
     .S1           ( 2 )
   ) circulant_4_1_2 (
     .data_i       ( test_data_i[4*ports_num*bus_size-1:0]    ),
-    .in_w_i       ( test_in_w[4*ports_num-1:0]               ),
-    .out_r_i      ( test_out_r[4*ports_num-1:0]              ),
+    .r_ready_out_i       ( test_r_ready_out[4*ports_num-1:0]               ),
+    .wr_ready_out_i      ( test_wr_ready_out[4*ports_num-1:0]              ),
 
     .data_o       ( test_data_o[0][4*ports_num*bus_size-1:0] ),
-    .out_w_o      ( test_out_w[0][4*ports_num-1:0]           ),
-    .in_r_o       ( test_in_r[0][4*ports_num-1:0]            )
+    .r_ready_in_o      ( test_r_ready_in[0][4*ports_num-1:0]           ),
+    .wr_ready_in_o       ( test_wr_ready_in[0][4*ports_num-1:0]            )
   );
 
   topology_module #(
@@ -56,12 +56,12 @@ module circulant_2_tb();
     .S1           ( 2 )
   ) circulant_6_2_1 (
     .data_i       ( test_data_i[6*ports_num*bus_size-1:0]    ),
-    .in_w_i       ( test_in_w[6*ports_num-1:0]               ),
-    .out_r_i      ( test_out_r[6*ports_num-1:0]              ),
+    .r_ready_out_i       ( test_r_ready_out[6*ports_num-1:0]               ),
+    .wr_ready_out_i      ( test_wr_ready_out[6*ports_num-1:0]              ),
 
     .data_o       ( test_data_o[1][6*ports_num*bus_size-1:0] ),
-    .out_w_o      ( test_out_w[1][6*ports_num-1:0]           ),
-    .in_r_o       ( test_in_r[1][6*ports_num-1:0]            )
+    .r_ready_in_o      ( test_r_ready_in[1][6*ports_num-1:0]           ),
+    .wr_ready_in_o       ( test_wr_ready_in[1][6*ports_num-1:0]            )
   );
 
   topology_module #(
@@ -71,12 +71,12 @@ module circulant_2_tb();
     .S1           ( 2 )
   ) circulant_9_2_1 (
     .data_i       ( test_data_i[9*ports_num*bus_size-1:0]    ),
-    .in_w_i       ( test_in_w[9*ports_num-1:0]               ),
-    .out_r_i      ( test_out_r[9*ports_num-1:0]              ),
+    .r_ready_out_i       ( test_r_ready_out[9*ports_num-1:0]               ),
+    .wr_ready_out_i      ( test_wr_ready_out[9*ports_num-1:0]              ),
 
     .data_o       ( test_data_o[2][9*ports_num*bus_size-1:0] ),
-    .out_w_o      ( test_out_w[2][9*ports_num-1:0]           ),
-    .in_r_o       ( test_in_r[2][9*ports_num-1:0]            )
+    .r_ready_in_o      ( test_r_ready_in[2][9*ports_num-1:0]           ),
+    .wr_ready_in_o       ( test_wr_ready_in[2][9*ports_num-1:0]            )
   );
 
   topology_module #(
@@ -86,12 +86,12 @@ module circulant_2_tb();
     .S1           ( 3 )
   ) circulan_9_2_3 (
     .data_i       ( test_data_i[9*ports_num*bus_size-1:0]    ),
-    .in_w_i       ( test_in_w[9*ports_num-1:0]               ),
-    .out_r_i      ( test_out_r[9*ports_num-1:0]              ),
+    .r_ready_out_i       ( test_r_ready_out[9*ports_num-1:0]               ),
+    .wr_ready_out_i      ( test_wr_ready_out[9*ports_num-1:0]              ),
 
     .data_o       ( test_data_o[3][9*ports_num*bus_size-1:0] ),
-    .out_w_o      ( test_out_w[3][9*ports_num-1:0]           ),
-    .in_r_o       ( test_in_r[3][9*ports_num-1:0]            )
+    .r_ready_in_o      ( test_r_ready_in[3][9*ports_num-1:0]           ),
+    .wr_ready_in_o       ( test_wr_ready_in[3][9*ports_num-1:0]            )
   );
 
   // clock signal generating
@@ -106,8 +106,8 @@ module circulant_2_tb();
   initial
     begin
       test_data_i = {{max_test_len-ports_num{1'b0}}, {bus_size{1'b1}}};
-      test_in_w = {{8*ports_num+ports_num-1{1'b0}}, 1'b1};
-      test_out_r = {{8*ports_num+ports_num-1{1'b0}}, 1'b1};
+      test_r_ready_out = {{8*ports_num+ports_num-1{1'b0}}, 1'b1};
+      test_wr_ready_out = {{8*ports_num+ports_num-1{1'b0}}, 1'b1};
       test_idx = 0;
       out_idx = 0;
       exp_idx = 0;
@@ -125,8 +125,8 @@ module circulant_2_tb();
 
   // out data
   assign exp_data_o = test_data[test_idx*exp_data_num];
-  assign exp_out_w = test_data[test_idx*exp_data_num + 1];
-  assign exp_in_r = test_data[test_idx*exp_data_num + 2];
+  assign exp_r_ready_in = test_data[test_idx*exp_data_num + 1];
+  assign exp_wr_ready_in = test_data[test_idx*exp_data_num + 2];
 
   // test data input and processing
   always @( posedge clk_r )  // setting input regs on a negative edge
@@ -134,27 +134,27 @@ module circulant_2_tb();
       #(period/4);
       // in data
       test_data_i = test_data_i <<< bus_size;
-      test_in_w = test_in_w <<< 1;
-      test_out_r = test_out_r <<< 1;
+      test_r_ready_out = test_r_ready_out <<< 1;
+      test_wr_ready_out = test_wr_ready_out <<< 1;
       // module idx
       case (test_idx)
         4*4:  begin
           out_idx = 1;
           test_data_i = {{max_test_len-ports_num{1'b0}}, {bus_size{1'b1}}};
-          test_in_w = {{8*ports_num+ports_num-1{1'b0}}, 1'b1};
-          test_out_r = {{8*ports_num+ports_num-1{1'b0}}, 1'b1};
+          test_r_ready_out = {{8*ports_num+ports_num-1{1'b0}}, 1'b1};
+          test_wr_ready_out = {{8*ports_num+ports_num-1{1'b0}}, 1'b1};
         end
         4*(4+6): begin
           out_idx = 2;
           test_data_i = {{max_test_len-ports_num{1'b0}}, {bus_size{1'b1}}};
-          test_in_w = {{8*ports_num+ports_num-1{1'b0}}, 1'b1};
-          test_out_r = {{8*ports_num+ports_num-1{1'b0}}, 1'b1};
+          test_r_ready_out = {{8*ports_num+ports_num-1{1'b0}}, 1'b1};
+          test_wr_ready_out = {{8*ports_num+ports_num-1{1'b0}}, 1'b1};
         end
         4*(4+6+9): begin
           out_idx = 3;
           test_data_i = {{max_test_len-ports_num{1'b0}}, {bus_size{1'b1}}};
-          test_in_w = {{8*ports_num+ports_num-1{1'b0}}, 1'b1};
-          test_out_r = {{8*ports_num+ports_num-1{1'b0}}, 1'b1};
+          test_r_ready_out = {{8*ports_num+ports_num-1{1'b0}}, 1'b1};
+          test_wr_ready_out = {{8*ports_num+ports_num-1{1'b0}}, 1'b1};
         end
       endcase
     end
@@ -169,11 +169,11 @@ module circulant_2_tb();
           $finish;
         end
       // checking if outs are expected
-      if ( test_data_o[out_idx] !== exp_data_o || test_out_w[out_idx] !== exp_out_w || test_in_r[out_idx] !== exp_in_r )
+      if ( test_data_o[out_idx] !== exp_data_o || test_r_ready_in[out_idx] !== exp_r_ready_in || test_wr_ready_in[out_idx] !== exp_wr_ready_in )
         begin
           $display("Error in %d test", test_idx);
-          $display("Output:   %b, %b, %b\nExpected: %b, %b, %b", test_data_o[out_idx], test_out_w[out_idx], test_in_r[out_idx],
-                                                                 exp_data_o,           exp_out_w,           exp_in_r);
+          $display("Output:   %b, %b, %b\nExpected: %b, %b, %b", test_data_o[out_idx], test_r_ready_in[out_idx], test_wr_ready_in[out_idx],
+                                                                 exp_data_o,           exp_r_ready_in,           exp_wr_ready_in);
           errors_num = errors_num + 1;
         end
       test_idx = test_idx + 1;

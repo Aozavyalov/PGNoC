@@ -1,214 +1,228 @@
 `timescale 1ns / 1ns
-`include "../../src/configs.vh"
 
 module fabric #(
-  parameter  DATA_SIZE    = 32,
-  parameter  ADDR_SIZE    = 4,
-  parameter  ADDR         = 0,
-  parameter  NODES_NUM    = 9,
-  parameter  PACKS_TO_GEN = 10,
-  parameter  MAX_PACK_LEN = 10,
-  parameter  DEBUG        = 1'b0,
-  parameter  FREQ         = 25,
-  localparam BUS_SIZE = DATA_SIZE + ADDR_SIZE + 1
+  parameter  DATA_SIZE    = 32,   // how many bits use for a data in a flit
+  parameter  ADDR_SIZE    = 4,    // how many bits use for an address in a flit
+  parameter  ADDR         = 0,    // an address of a node
+  parameter  NODES_NUM    = 9,    // a number of nodes in a NoC
+  parameter  PACKS_TO_GEN = 10,   // a number of packets to generate and send
+  parameter  MAX_PACK_LEN = 10,   // packets a generated with a lenght from 1 to MAX_PACK_LEN
+  parameter  DEBUG        = 1'b0, // if debug, messages will be sent to a tcl-console, overwise to a file
+  parameter  FLIT_DELAY   = 25,   // frequence of flits sending. It will be sent 1 flit in FLIT_DELAY cycles
+  parameter  PACK_DELAY   = 25,   // frequence of flits sending. It will be sent 1 flit in FLIT_DELAY cycles
+  parameter  LOGS_PATH    = "../logs", // a path to a new log file
+  parameter  TEST_TIME    = 0,    // then timer will set this value, log file will be closed
+  localparam BUS_SIZE = DATA_SIZE + ADDR_SIZE + 1 // a full size of data bus
 ) (
   input                     clk,
   input                     a_rst,
-  input                     in_r,
-  input                     out_w,
+  // connections with router
+  input                     wr_ready_in,
+  input                     r_ready_in,
   input      [BUS_SIZE-1:0] data_i,
-  output reg                in_w,
-  output reg                out_r,
-  output reg [BUS_SIZE-1:0] data_o
+  output reg                r_ready_out,
+  output reg                wr_ready_out,
+  output reg [BUS_SIZE-1:0] data_o,
+  // additional info
+  output reg [31:0]         recv_packs   // received packs num
 );
-  // generating data
-  localparam RESET = 3'h0, PACK_GEN = 3'h1, FLIT_GEN = 3'h2, FLIT_SEND = 3'h3, GEN_FINISH = 3'h4;
 
-  integer generated_packs;
-  integer pack_len;
-  integer freq_cntr;
-
-  reg [2:0] gen_state;
-  reg [ADDR_SIZE-1:0] dest_addr;
-  reg [DATA_SIZE-1:0] gen_data;
-
-  function [4*8-1:0] itoa;
-    input [31:0] int;
-    integer i;
-      for (i = 0; i < 4; i = i + 1)
-        case (int[i*4+:4])
-          4'h0: itoa[i*8+:8] = "0";
-          4'h1: itoa[i*8+:8] = "1";
-          4'h2: itoa[i*8+:8] = "2";
-          4'h3: itoa[i*8+:8] = "3";
-          4'h4: itoa[i*8+:8] = "4";
-          4'h5: itoa[i*8+:8] = "5";
-          4'h6: itoa[i*8+:8] = "6";
-          4'h7: itoa[i*8+:8] = "7";
-          4'h8: itoa[i*8+:8] = "8";
-          4'h9: itoa[i*8+:8] = "9";
-          4'ha: itoa[i*8+:8] = "a";
-          4'hb: itoa[i*8+:8] = "b";
-          4'hc: itoa[i*8+:8] = "c";
-          4'hd: itoa[i*8+:8] = "d";
-          4'he: itoa[i*8+:8] = "e";
-          4'hf: itoa[i*8+:8] = "f";
-          default: itoa[i*8+:8] = "0";
-        endcase
-  endfunction
+  // var for counting time from reset in cycles
+  integer time_int;
 
   // open log file
-  integer log_file;
+  integer log_file; // log file descriptor
   initial
     if (!DEBUG)
-      begin
-        log_file = $fopen({`LOGS_PATH, "/fabric_", itoa(ADDR)});
-        #(2*`CLK_CNT+2) $fclose(log_file);
-      end
+      log_file = $fopen(LOGS_PATH);
+  
+  //////////////////////////////////// generating data ////////////////////////////////////
+  // sm states
+  localparam PACK_GEN = 2'h0, FLIT_SEND = 2'h1, SEND_ACCEPTING = 2'h2, GEN_FINISH = 2'h3;
+  reg [2:0] gen_state; // state reg
+
+  integer generated_packs; // number of generated packets
+  integer generated_flits; // number of generated flits in a temp packet
+  integer pack_len;        // lenght of temp packet
+  integer delay_cntr;       // counter for flit sending
+
+  reg [ADDR_SIZE-1:0] dest_addr;
+  reg [DATA_SIZE*MAX_PACK_LEN-1:0] new_packet; // a reg for a full generated packet
+  reg fin_flag;                                // reg about finishing
 
   // generating data to send
-  always @(posedge clk, posedge a_rst)
-    begin
-      if (!a_rst)
+  always @(posedge clk)
+    if (!a_rst) // use it for dont adding a reset state and a package wont generated
       case (gen_state)
-        PACK_GEN:
+      PACK_GEN: // state there a new packet will be generated
+      begin
+        if (delay_cntr < PACK_DELAY - 1)
+          delay_cntr = delay_cntr + 1;
+        else
+        begin
+          delay_cntr = 0;
+          pack_len = 1 + $urandom % MAX_PACK_LEN; // a lenght is a random value from 1 to MAX_PACK_LEN
+          dest_addr = $urandom % NODES_NUM;       // a destination address is a random value from 0 to NODES_NUM-1
+          new_packet = {DATA_SIZE*MAX_PACK_LEN{1'b0}}; // fill reg for packet with zeroes
+          // $urandom is only 32 bits, so need "for" generating
+          for (generated_flits=0; generated_flits < DATA_SIZE*pack_len/32; generated_flits = generated_flits + 1)
+            new_packet[generated_flits*32+:32] = $urandom;
+          generated_flits = 0; // just to set 0
+          if (dest_addr != ADDR) // if correct address to send (another from ADDR), then send
           begin
-            pack_len = $urandom % MAX_PACK_LEN;
-            dest_addr = $urandom % NODES_NUM;
-            if (dest_addr != ADDR)
-              begin
-                gen_state = FLIT_GEN;
-                if (DEBUG)
-                  $display("%5d|%3h|new package|len:%2h|addr:%3h", $time, ADDR, pack_len + 1, dest_addr);
-                else
-                  $fdisplay(log_file, "%5d|%3h|new package|len:%2h|addr:%3h", $time, ADDR, pack_len + 1, dest_addr);
-              end
-          end
-        FLIT_GEN:
-          if (out_w == 1'b0)
-            if (freq_cntr - 1 == FREQ)
-              begin
-                freq_cntr = 0;
-                out_r = 1'b1;
-                gen_data = $urandom;
-                data_o = {gen_data, (pack_len == 0 ? 1'b1 : 1'b0), dest_addr};  
-                if (DEBUG)     
-                  $display("%5d|%3h|new flit|%b", $time, ADDR, data_o);
-                else
-                  $fdisplay(log_file, "%5d|%3h|new flit|%b", $time, ADDR, data_o);
-                gen_state = FLIT_SEND;
-              end
-            else
-              freq_cntr = freq_cntr + 1;
-        FLIT_SEND:
-          if (out_w == 1'b1)
-            begin
-              out_r = 1'b0;
-              if (DEBUG)
-                $display("%5d|%3h|flit sended|%b", $time, ADDR, data_o);
-              else
-                $fdisplay(log_file, "%5d|%3h|flit sended|%b", $time, ADDR, data_o);
-              if (pack_len == 0)
-                  begin
-                    if (DEBUG)
-                      $display("%5d|%3h|package sended|%d", $time, ADDR, generated_packs);
-                    else
-                      $fdisplay(log_file, "%5d|%3h|package sended|%d", $time, ADDR, generated_packs);
-                    generated_packs = generated_packs + 1;
-                    if (generated_packs == PACKS_TO_GEN)
-                      gen_state = GEN_FINISH;
-                    else
-                      gen_state = PACK_GEN;
-                  end
-              else
-                begin
-                  gen_state = FLIT_GEN;
-                  pack_len  = pack_len - 1;
-                end
-            end
-        GEN_FINISH:
-          begin
+            gen_state = FLIT_SEND;
             if (DEBUG)
-              $display("%5d|%3h|finish generating|%d", $time, ADDR, generated_packs);
+              $display("%5d|%3h|new package|len: %2d|addr: %3h|%b", time_int, ADDR, pack_len, dest_addr, new_packet);
             else
-              $fdisplay(log_file, "%5d|%3h|finish generating|%d", $time, ADDR, generated_packs);
+              $fdisplay(log_file, "%5d|%3h|new package|len: %2d|addr: %3h|%b", time_int, ADDR, pack_len, dest_addr, new_packet);
           end
-        default:
-          gen_state = RESET;
-      endcase
-    end
+          else // need just for message while debug
+            if (DEBUG)
+              $display("%5d|%3h|addr %3h is wrong. Regenerating package", time_int, ADDR, dest_addr);
+            else
+              $fdisplay(log_file, "%5d|%3h|addr %3h is wrong. Regenerating package", time_int, ADDR, dest_addr);
+        end
+      end
+      FLIT_SEND: // state for flit sending
+        if (delay_cntr < FLIT_DELAY) // waiting for timer
+          delay_cntr = delay_cntr + 1; // increase freq counter
+        else
+          if (r_ready_in == 1'b0) // just to be sure that prev sending is ended
+          begin
+            delay_cntr = 0;       // reset timer
+            wr_ready_out = 1'b1; // ready to write
+            // assemble a flit: data, packet ending bit, dest address
+            data_o = {new_packet[generated_flits*DATA_SIZE+:DATA_SIZE], (pack_len - 1 == generated_flits ? 1'b1 : 1'b0), dest_addr};
+            generated_flits = generated_flits + 1; // next flit
+            // write about new flit
+            if (DEBUG)
+              $display("%5d|%3h|new flit|%b", time_int, ADDR, data_o);
+            else
+              $fdisplay(log_file, "%5d|%3h|new flit|%b", time_int, ADDR, data_o);
+            gen_state = SEND_ACCEPTING;
+          end
+      SEND_ACCEPTING: // state for accepting of send
+        if (r_ready_in == 1'b1) // then flit is readed
+        begin
+          wr_ready_out = 1'b0;  // dont ready for write
+          // message about sending
+          if (DEBUG)
+            $display("%5d|%3h|flit sended|%b", time_int, ADDR, data_o);
+          else
+            $fdisplay(log_file, "%5d|%3h|flit sended|%b", time_int, ADDR, data_o);
+          if (pack_len > generated_flits)
+            gen_state = FLIT_SEND; // if not a last flit, send next
+          else
+          begin
+            generated_packs = generated_packs + 1; // packs counter increase
+            // message about full pack sended
+            if (DEBUG)
+              $display("%5d|%3h|package sended|%2d", time_int, ADDR, generated_packs);
+            else
+              $fdisplay(log_file, "%5d|%3h|package sended|%2d", time_int, ADDR, generated_packs);
+            if (generated_packs == PACKS_TO_GEN) // is a package was last to generate
+              gen_state = GEN_FINISH; // goto finish
+            else
+              gen_state = PACK_GEN;   // else generate a new pack
+          end
+        end
+      GEN_FINISH: // state for stop working. Just write a message about finishing
+      begin
+        if (!fin_flag) // a flag is needed for only one message
+        begin
+          if (DEBUG)
+            $display("%5d|%3h|finish generating|%5d", time_int, ADDR, generated_packs);
+          else
+            $fdisplay(log_file, "%5d|%3h|finish generating|%5d", time_int, ADDR, generated_packs);
+          fin_flag = 1'b1;
+        end
+      end
+      default: gen_state = PACK_GEN;
+  endcase
+  //////////////////////////////////// end generating ////////////////////////////////////
 
-  localparam WAIT = 2'h1, GET = 2'h2;
-  reg [2:0] recv_state;
-  integer recv_flits;
-  integer wrong_packs;
-  integer recv_packs;
+  //////////////////////////////////// receiving ////////////////////////////////////
+  localparam GET_FLIT = 1'h0, WAIT_NEXT = 1'h1; // sm states
+  reg [2:0] recv_state;                      // state reg
+  integer recv_flits;                        // received flits num
+  integer wrong_flits;                       // wrong flits num
+  reg [DATA_SIZE*MAX_PACK_LEN-1:0] recved_packet; // reg with full received packet
   
-  // receiving data
-  always @(posedge clk, posedge a_rst)
-    begin
-      if (!a_rst)
+  always @(posedge clk)
+    if (!a_rst)
       case (recv_state)
-        WAIT:
-          if (in_r == 1'b1)
-            begin
-              in_w       = 1'b1;
-              recv_state = GET;
-              recv_packs = 0;
-              if (DEBUG)
-                $display("%5d|%3h|wait for reading", $time, ADDR);
-              else
-                $fdisplay(log_file, "%5d|%3h|wait for reading", $time, ADDR);
-            end
-        GET:
-          if (in_r == 1'b0)
-            begin
-              in_w = 1'b0;
-              if (DEBUG)
-                $display("%5d|%3h|recved flit|%b", $time, ADDR, recv_flits, data_i);
-              else
-                $fdisplay(log_file, "%5d|%3h|recved flit|%b", $time, ADDR, recv_flits, data_i);
-              if (ADDR != data_i[ADDR_SIZE-1:0])  // if wrong address
-                begin
-                  if (DEBUG)
-                    $display("%5d|%3h|recved wrong flit|real addr: %3h", $time, ADDR, data_i[ADDR_SIZE-1:0]);
-                  else
-                    $fdisplay(log_file, "%5d|%3h|recved wrong flit|real addr: %3h", $time, ADDR, data_i[ADDR_SIZE-1:0]);
-                  wrong_packs = wrong_packs + 1;
-                end
-              if (data_i[ADDR_SIZE] == 1'b1)    // if last flit of a package
-                begin
-                  recv_packs = recv_packs + 1;
-                  recv_flits = 0;
-                  if (DEBUG)
-                    $display("%5d|%3h|recved package|packeges:%d", $time, ADDR, recv_packs);
-                  else
-                    $fdisplay(log_file, "%5d|%3h|recved package|packeges:%d", $time, ADDR, recv_packs);
-                end
-              else
-                recv_flits = recv_flits + 1;
-              recv_state = WAIT;
-            end
+      GET_FLIT: // state for waiting and getting a flit
+        if (wr_ready_in == 1'b1)  // then it has flit to get
+        begin
+          r_ready_out = 1'b1;     // accept getting
+          recv_state  = WAIT_NEXT;   // next state
+          recved_packet[recv_flits*DATA_SIZE+:DATA_SIZE] = data_i[ADDR_SIZE+1+:DATA_SIZE+1];
+          if (ADDR != data_i[ADDR_SIZE-1:0])  // if wrong address
+          begin
+            // writing message about wrong flit
+            if (DEBUG)
+              $display("%5d|%3h|recved wrong flit|real addr: %3h|%b", time_int, ADDR, data_i[ADDR_SIZE-1:0], data_i);
+            else
+              $fdisplay(log_file, "%5d|%3h|recved wrong flit|real addr: %3h|%b", time_int, ADDR, data_i[ADDR_SIZE-1:0], data_i);
+            wrong_flits = wrong_flits + 1;
+          end
+          else
+          begin
+            // write message about getting flit
+            if (DEBUG)
+              $display("%5d|%3h|recved flit|%2d|%b", time_int, ADDR, recv_flits, data_i);
+            else
+              $fdisplay(log_file, "%5d|%3h|recved flit|%2d|%b", time_int, ADDR, recv_flits, data_i);
+            recv_flits = recv_flits + 1;
+          end
+          if (data_i[ADDR_SIZE] == 1'b1) // if last flit of a package
+          begin
+            recv_packs = recv_packs + 1;
+            if (DEBUG)
+              $display("%5d|%3h|recved package|len: %2d|packages: %2d|%b", time_int, ADDR, recv_flits, recv_packs, recved_packet);
+            else
+              $fdisplay(log_file, "%5d|%3h|recved package|len: %2d|packages: %2d|%b", time_int, ADDR, recv_flits, recv_packs, recved_packet);
+            recved_packet = {DATA_SIZE*MAX_PACK_LEN{1'b0}};
+            recv_flits = 0;
+          end
+        end
+      WAIT_NEXT: // state for changing signal about reading
+      begin
+        r_ready_out = 1'b0;
+        recv_state = GET_FLIT;
+      end
+      default: recv_state = GET_FLIT;
       endcase
-    end
 
-  // resetting
+  //////////////////////////////////// end receiving ////////////////////////////////////
+
+  // resetting and time counting
   always @(posedge clk, posedge a_rst)
     if (a_rst)
-      begin
-        out_r           <= 1'b0;
-        gen_state       <= PACK_GEN;
-        pack_len        <= 0;
-        generated_packs <= 0;
-        freq_cntr       <= 0;
-        in_w            <= 1'b0;
-        recv_state      <= WAIT;
-        recv_flits      <= 0;
-        wrong_packs     <= 0;
-        if (DEBUG)
-          $display("%5d|%3h|reset", $time, ADDR);
-        else
-          $fdisplay(log_file, "%5d|%3h|reset", $time, ADDR);
-      end
+    begin // resetting all vars
+      wr_ready_out    = 1'b0;
+      gen_state       = PACK_GEN;
+      pack_len        = 0;
+      generated_packs = 0;
+      delay_cntr      = 0;
+      r_ready_out     = 1'b0;
+      recv_state      = GET_FLIT;
+      recv_packs      = 0;
+      recv_flits      = 0;
+      wrong_flits     = 0;
+      time_int        = 0;
+      fin_flag        = 0;
+      recved_packet   = {DATA_SIZE*MAX_PACK_LEN{1'b0}};
+      if (DEBUG)
+        $display("%5d|%3h|reset", time_int, ADDR);
+      else
+        $fdisplay(log_file, "%5d|%3h|reset", time_int, ADDR);
+    end
+    else
+    begin // also counting timer
+      time_int = time_int + 1;
+      if (time_int == TEST_TIME)
+        $fclose(log_file);
+    end
 
 endmodule // fabric

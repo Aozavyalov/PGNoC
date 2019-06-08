@@ -20,14 +20,10 @@ module topology_module #(
 );
   `ifdef MESH_2D
   mesh_2d #(.PORT_SIZE(PORT_SIZE), .NODES_NUM(NODES_NUM), .H_SIZE(H_SIZE)) connector(data_i, data_o);
-  `else
-  `ifdef CIRCULANT_2
+  `elsif CIRCULANT_2
   circulant_2 #(.PORT_SIZE(PORT_SIZE), .NODES_NUM(NODES_NUM), .S0(S0), .S1(S1)) connector(data_i, data_o);
-  `else
-  `ifdef TORUS
+  `elsif TORUS
   torus #(.PORT_SIZE(PORT_SIZE), .NODES_NUM(NODES_NUM), .H_SIZE(H_SIZE)) connector(data_i, data_o);
-  `endif // TORUS
-  `endif // CIRCULANT_2
-  `endif // MESH
+  `endif
 
 endmodule // topology_module

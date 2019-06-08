@@ -12,7 +12,7 @@ module fabric_tb();
 
   // connect ip to itself
   wire [5:0] data_0_o, data_1_o;
-  wire out_w_0, out_w_1, in_r_0, in_r_1;
+  wire r_ready_in_0, r_ready_in_1, wr_ready_in_0, wr_ready_in_1;
 
   fabric #(
     .DATA_SIZE(4),
@@ -27,10 +27,10 @@ module fabric_tb();
     .a_rst    (rst_r),
     .data_i   (data_1_o),
     .data_o   (data_0_o), 
-    .out_w    (out_w_0),
-    .in_r     (in_r_0),
-    .out_r    (in_r_1),
-    .in_w     (out_w_1)
+    .r_ready_in    (r_ready_in_0),
+    .wr_ready_in     (wr_ready_in_0),
+    .wr_ready_out    (wr_ready_in_1),
+    .r_ready_out     (r_ready_in_1)
   );
 
   fabric #(
@@ -46,10 +46,10 @@ module fabric_tb();
     .a_rst    (rst_r),
     .data_i   (data_0_o),
     .data_o   (data_1_o),
-    .out_w    (out_w_1),
-    .in_r     (in_r_1),
-    .out_r    (in_r_0),
-    .in_w     (out_w_0)
+    .r_ready_in    (r_ready_in_1),
+    .wr_ready_in     (wr_ready_in_1),
+    .wr_ready_out    (wr_ready_in_0),
+    .r_ready_out     (r_ready_in_0)
   );
 
   initial

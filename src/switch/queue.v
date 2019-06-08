@@ -5,7 +5,7 @@ module queue #(
   input                     clk,
   input                     a_rst,
   input                     wr_req,
-  input                     readed,
+  input                     mem_readed,
   input      [BUS_SIZE-1:0] data_i,
   output                    full,
   output                    empty,
@@ -44,7 +44,7 @@ module queue #(
             wr_ptr = wr_ptr + 1;
             filling = filling + 1;
           end
-        if (readed)
+        if (mem_readed)
           begin
             r_ptr = r_ptr + 1;
             filling = filling - 1;
