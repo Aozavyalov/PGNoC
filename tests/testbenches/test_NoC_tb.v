@@ -1,5 +1,9 @@
 `timescale 1ns / 100ps
+
+`ifndef configs
+`define configs
 `include "../../src/configs.vh"
+`endif
 
 module test_NoC_tb();
   
@@ -9,7 +13,8 @@ module test_NoC_tb();
   localparam ports_num = `PORTS_NUM;
   localparam data_size = `DATA_SIZE;
   localparam addr_size = `ADDR_SIZE;
-  localparam gen_freq  = `GEN_FREQ;
+  localparam flit_delay  = `FLIT_DELAY;
+  localparam pack_delay  = `PACK_DELAY;
   localparam mem_log2  = `MEM_LOG2;
   localparam packs_to_gen = `PACKS_TO_GEN;
   localparam max_pack_len = `MAX_PACK_LEN;
@@ -22,25 +27,37 @@ module test_NoC_tb();
 
   `ifdef MESH_2D
   parameter h_size     = `H_SIZE;
-  `else
-  `ifdef CIRCULANT_2
+  `elsif CIRCULANT_2
   parameter s0         = `S0;
   parameter s1         = `S1;
-  `else
-  `ifdef TORUS
+  `elsif TORUS
   parameter h_size     = `H_SIZE;
-  `endif // TORUS
-  `endif // CIRCULANT_2
-  `endif // MESH_2D
+  `endif
 
   reg clk_r;
   reg rst_r;
+
+  // creating a header in log
+  integer log_file; // log file descriptor
+  initial
+    if (!debug)
+    begin
+      log_file = $fopen(logs_path);
+      `ifdef MESH_2D
+      $fdisplay(log_file, "Mesh, nodes %d, h_size %d, ports %d, flit_size %d, addr_size %d", nodes_num, h_size, ports_num, flit_size, addr_size);
+      `elsif CIRCULANT_2
+      $fdisplay(log_file, "Circulant2, nodes %d, s0 %d, s1 %d, ports %d, flit_size %d, addr_size %d", nodes_num, s0, s1, ports_num, flit_size, addr_size);
+      `elsif TORUS
+      $fdisplay(log_file, "Torus, nodes %d, h_size %d, ports %d, flit_size %d, addr_size %d", nodes_num, h_size, ports_num, flit_size, addr_size);
+      `endif
+    end
 
   // connections and modules
 
   // connector buses
   wire [nodes_num*bus_size-1:0] conn_in;
   wire [nodes_num*bus_size-1:0] conn_out;
+  reg [nodes_num*bus_size-1:0] conn_out_reg;
 
   // IP + switch connection
   genvar node_idx, port_idx;
@@ -73,7 +90,8 @@ module test_NoC_tb();
       .PACKS_TO_GEN(packs_to_gen),
       .MAX_PACK_LEN(max_pack_len),
       .DEBUG       (debug),
-      .FREQ        (gen_freq),
+      .FLIT_DELAY  (flit_delay),
+      .PACK_DELAY  (pack_delay),
       .LOGS_PATH   (logs_path),
       .TEST_TIME   (max_test)
     ) IP (
@@ -127,16 +145,12 @@ module test_NoC_tb();
       .PORTS_NUM(ports_num),
   `ifdef MESH_2D
       .H_SIZE(h_size)
-  `else
-  `ifdef CIRCULANT_2
+  `elsif CIRCULANT_2
       .S0(s0),
       .S1(s1)
-  `else
-  `ifdef TORUS
+  `elsif TORUS
       .H_SIZE(h_size)
-  `endif // TORUS
-  `endif // CIRCULANT_2
-  `endif // MESH_2D
+  `endif 
     ) top_mod (
       .data_i (conn_in),
       .data_o (conn_out)
@@ -152,9 +166,10 @@ module test_NoC_tb();
   end
 
   integer test_idx;
-
+  integer repeat_num;
   initial
   begin
+    repeat_num = 0;
     test_idx = 0;
     rst_r = 1'b1;
     #(halfperiod) rst_r = 1'b0;
@@ -162,9 +177,33 @@ module test_NoC_tb();
   
   always @(posedge clk_r)
   begin
+    if (conn_out_reg !== conn_out)
+    begin
+      conn_out_reg = conn_out;
+      repeat_num = 0;
+    end
+    else
+      repeat_num = repeat_num + 1;
+    if (repeat_num == 10_000)
+    begin
+      if (debug)
+        $display("Test has been finished untimely, %d packets received", IP_to_switch[nodes_num-1].recved_packet_sum);
+      else
+      begin
+        $fdisplay(log_file, "Test has been finished untimely, %d packets received", IP_to_switch[nodes_num-1].recved_packet_sum);
+        $fclose(log_file);
+      end
+      $finish;
+    end
     if (test_idx == max_test || IP_to_switch[nodes_num-1].recved_packet_sum == packs_to_gen*nodes_num)
     begin
-      $display("Test has been finished, %d packets received", IP_to_switch[nodes_num-1].recved_packet_sum);
+      if (debug)
+        $display("Test has been completed, %d packets received", IP_to_switch[nodes_num-1].recved_packet_sum);
+      else
+      begin
+        $fdisplay(log_file, "Test has been completed, %d packets received", IP_to_switch[nodes_num-1].recved_packet_sum);
+        $fclose(log_file);
+      end
       $finish;
     end
     test_idx = test_idx + 1;

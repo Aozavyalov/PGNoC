@@ -1,10 +1,12 @@
 /.ipynb_checkpoints
 /.vscode
-/NoC_py_env
-/Stats develop.ipynb
+__pycache__
+/sim*
+/noc-env
 /tests/testfiles/*
-*/logs
+/tests/logs/*
 /routing_tables
-/stats
-*/sim
+*.json
+*.png
+*.stat
 *.srtf

@@ -1,0 +1,265 @@
+Topology type: Mesh
+Parameters: {'nodes': '25', 'h_size': '5', 'ports': '4', 'flit_size': '39', 'addr_size': '6'}
+Test has been finished untimely
+All stats:
+	Modeling time: 1541878
+	Flits injection rate: 0.019421666305635077
+	Packets injection rate: 0.003527231077945207
+	Flits sended: 748646
+	Flits received: 747821
+	Packets sended: 135964
+	Packets received: 135826
+	Wrong flits received: 0
+	Wrong packets received: 0
+	Mean flit receive time: 71.61865362651014
+	Unknown flits num: 0
+0 node
+	Flits sended: 30224
+	Flits received: 29609
+	Packets sended: 5470
+	Packets received: 5394
+	Wrong flits received: 0
+	Wrong packets received: 0
+	Mean flit receive time: 66.57073862676889
+	Last flit sended in 1542244 time
+	Last flit received in 1539701 time
+1 node
+	Flits sended: 30091
+	Flits received: 30559
+	Packets sended: 5452
+	Packets received: 5533
+	Wrong flits received: 0
+	Wrong packets received: 0
+	Mean flit receive time: 68.79446316960633
+	Last flit sended in 1540025 time
+	Last flit received in 1539523 time
+2 node
+	Flits sended: 30075
+	Flits received: 29229
+	Packets sended: 5436
+	Packets received: 5347
+	Wrong flits received: 0
+	Wrong packets received: 0
+	Mean flit receive time: 73.82062335351877
+	Last flit sended in 1540897 time
+	Last flit received in 1539419 time
+3 node
+	Flits sended: 29918
+	Flits received: 29683
+	Packets sended: 5446
+	Packets received: 5425
+	Wrong flits received: 0
+	Wrong packets received: 0
+	Mean flit receive time: 72.78526429269279
+	Last flit sended in 1541217 time
+	Last flit received in 1540828 time
+4 node
+	Flits sended: 30252
+	Flits received: 30175
+	Packets sended: 5480
+	Packets received: 5460
+	Wrong flits received: 0
+	Wrong packets received: 0
+	Mean flit receive time: 98.31489643744821
+	Last flit sended in 1542949 time
+	Last flit received in 1540854 time
+5 node
+	Flits sended: 30297
+	Flits received: 30254
+	Packets sended: 5449
+	Packets received: 5415
+	Wrong flits received: 0
+	Wrong packets received: 0
+	Mean flit receive time: 62.28118595888147
+	Last flit sended in 1541403 time
+	Last flit received in 1539519 time
+6 node
+	Flits sended: 29864
+	Flits received: 30031
+	Packets sended: 5428
+	Packets received: 5473
+	Wrong flits received: 0
+	Wrong packets received: 0
+	Mean flit receive time: 61.375112383870004
+	Last flit sended in 1539518 time
+	Last flit received in 1539114 time
+7 node
+	Flits sended: 29742
+	Flits received: 30589
+	Packets sended: 5384
+	Packets received: 5494
+	Wrong flits received: 0
+	Wrong packets received: 0
+	Mean flit receive time: 65.96273170093825
+	Last flit sended in 1539921 time
+	Last flit received in 1539374 time
+8 node
+	Flits sended: 29936
+	Flits received: 29601
+	Packets sended: 5432
+	Packets received: 5421
+	Wrong flits received: 0
+	Wrong packets received: 0
+	Mean flit receive time: 65.65943718117632
+	Last flit sended in 1541245 time
+	Last flit received in 1540067 time
+9 node
+	Flits sended: 29427
+	Flits received: 30171
+	Packets sended: 5428
+	Packets received: 5452
+	Wrong flits received: 0
+	Wrong packets received: 0
+	Mean flit receive time: 91.03284611050347
+	Last flit sended in 1543372 time
+	Last flit received in 1540870 time
+10 node
+	Flits sended: 30032
+	Flits received: 29826
+	Packets sended: 5454
+	Packets received: 5395
+	Wrong flits received: 0
+	Wrong packets received: 0
+	Mean flit receive time: 56.88375913632401
+	Last flit sended in 1540434 time
+	Last flit received in 1539253 time
+11 node
+	Flits sended: 29974
+	Flits received: 29578
+	Packets sended: 5396
+	Packets received: 5396
+	Wrong flits received: 0
+	Wrong packets received: 0
+	Mean flit receive time: 61.01325309351545
+	Last flit sended in 1539503 time
+	Last flit received in 1539444 time
+12 node
+	Flits sended: 29797
+	Flits received: 31306
+	Packets sended: 5394
+	Packets received: 5643
+	Wrong flits received: 0
+	Wrong packets received: 0
+	Mean flit receive time: 63.51399092825656
+	Last flit sended in 1540185 time
+	Last flit received in 1539741 time
+13 node
+	Flits sended: 29621
+	Flits received: 30098
+	Packets sended: 5401
+	Packets received: 5477
+	Wrong flits received: 0
+	Wrong packets received: 0
+	Mean flit receive time: 63.30656522028042
+	Last flit sended in 1540933 time
+	Last flit received in 1540122 time
+14 node
+	Flits sended: 29226
+	Flits received: 29798
+	Packets sended: 5378
+	Packets received: 5412
+	Wrong flits received: 0
+	Wrong packets received: 0
+	Mean flit receive time: 88.4201959863078
+	Last flit sended in 1542443 time
+	Last flit received in 1541048 time
+15 node
+	Flits sended: 29680
+	Flits received: 30101
+	Packets sended: 5452
+	Packets received: 5421
+	Wrong flits received: 0
+	Wrong packets received: 0
+	Mean flit receive time: 60.500282382645096
+	Last flit sended in 1542226 time
+	Last flit received in 1540218 time
+16 node
+	Flits sended: 29730
+	Flits received: 29938
+	Packets sended: 5418
+	Packets received: 5429
+	Wrong flits received: 0
+	Wrong packets received: 0
+	Mean flit receive time: 64.37096666443985
+	Last flit sended in 1540511 time
+	Last flit received in 1540124 time
+17 node
+	Flits sended: 29561
+	Flits received: 30055
+	Packets sended: 5413
+	Packets received: 5485
+	Wrong flits received: 0
+	Wrong packets received: 0
+	Mean flit receive time: 65.99580768590917
+	Last flit sended in 1540775 time
+	Last flit received in 1540484 time
+18 node
+	Flits sended: 29909
+	Flits received: 30011
+	Packets sended: 5419
+	Packets received: 5474
+	Wrong flits received: 0
+	Wrong packets received: 0
+	Mean flit receive time: 68.13175169104662
+	Last flit sended in 1541728 time
+	Last flit received in 1540341 time
+19 node
+	Flits sended: 29911
+	Flits received: 28928
+	Packets sended: 5419
+	Packets received: 5262
+	Wrong flits received: 0
+	Wrong packets received: 0
+	Mean flit receive time: 90.07981886061947
+	Last flit sended in 1543170 time
+	Last flit received in 1540498 time
+20 node
+	Flits sended: 30430
+	Flits received: 29545
+	Packets sended: 5495
+	Packets received: 5399
+	Wrong flits received: 0
+	Wrong packets received: 0
+	Mean flit receive time: 65.96161787104417
+	Last flit sended in 1543191 time
+	Last flit received in 1540496 time
+21 node
+	Flits sended: 30316
+	Flits received: 29236
+	Packets sended: 5478
+	Packets received: 5363
+	Wrong flits received: 0
+	Wrong packets received: 0
+	Mean flit receive time: 69.90094404159255
+	Last flit sended in 1541330 time
+	Last flit received in 1539389 time
+22 node
+	Flits sended: 30251
+	Flits received: 30340
+	Packets sended: 5460
+	Packets received: 5528
+	Wrong flits received: 0
+	Wrong packets received: 0
+	Mean flit receive time: 72.68117996044825
+	Last flit sended in 1541810 time
+	Last flit received in 1539777 time
+23 node
+	Flits sended: 30080
+	Flits received: 29296
+	Packets sended: 5482
+	Packets received: 5321
+	Wrong flits received: 0
+	Wrong packets received: 0
+	Mean flit receive time: 73.54652512288366
+	Last flit sended in 1542460 time
+	Last flit received in 1540141 time
+24 node
+	Flits sended: 30302
+	Flits received: 29864
+	Packets sended: 5500
+	Packets received: 5407
+	Wrong flits received: 0
+	Wrong packets received: 0
+	Mean flit receive time: 99.5623828020359
+	Last flit sended in 1544473 time
+	Last flit received in 1541878 time
