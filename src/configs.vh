@@ -14,17 +14,17 @@
 // `define TORUS
 
 `ifdef MESH_2D
-`define RT_PATH "../mesh_rt.srtf"
+`define RT_PATH "../mesh_rt.hrtf"
 `define H_SIZE 5
 `endif
 
 `ifdef TORUS
-`define RT_PATH "../torus_rt.srtf"
+`define RT_PATH "../torus_rt.hrtf"
 `define H_SIZE 5
 `endif
 
 `ifdef CIRCULANT_2
-`define RT_PATH "../circ2_rt.srtf"
+`define RT_PATH "../circ2_rt.hrtf"
 `define S0 1
 `define S1 2
 `endif

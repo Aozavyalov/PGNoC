@@ -9,4 +9,4 @@ __pycache__
 *.json
 *.png
 *.stat
-*.srtf
+*.hrtf

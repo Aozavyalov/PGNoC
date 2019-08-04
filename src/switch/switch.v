@@ -5,8 +5,8 @@ module switch #(
   parameter NODES_NUM = 9,
   parameter ADDR      = 0,
   parameter MEM_LOG2  = 5,
-  parameter RT_PATH   = "",
-  localparam BUS_SIZE = DATA_SIZE + ADDR_SIZE + 1
+  parameter RT_PATH   = "../../circ2_7_1_2.hrtf",
+  parameter BUS_SIZE = DATA_SIZE + ADDR_SIZE + 1
 ) (
   input                               clk   ,
   input                               a_rst ,

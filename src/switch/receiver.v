@@ -2,7 +2,7 @@ module receiver #(
   parameter DATA_SIZE  = 32,
   parameter ADDR_SIZE  = 4,
   parameter PORTS_NUM  = 4,
-  localparam BUS_SIZE  = DATA_SIZE + ADDR_SIZE + 1
+  parameter BUS_SIZE  = DATA_SIZE + ADDR_SIZE + 1
 )(
   input                               clk,
   input                               a_rst,
